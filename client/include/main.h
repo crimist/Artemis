@@ -1,19 +1,3 @@
-/*
-Credits:
-	https://developer.mbed.org/handbook/C-Data-Types
-	http://www.netzmafia.de/skripten/unix/linux-daemon-howto.html
-	https://en.wikipedia.org/wiki/Unix_signal
-	http://stackoverflow.com/questions/10046916/is-it-possible-to-ignore-all-signals
-	http://man7.org/linux/man-pages/man7/signal.7.html
-	Hydra (2008)
-	Mirai (2016)
-	Qbot (?)
-	http://www.binarytides.com/tcp-syn-portscan-in-c-with-linux-sockets/
-
-To use:
-	https://telnetscan.shadowserver.org/all/telnet_hilbert_1024_current.png
-*/
-
 #pragma once
 
 #define _GNU_SOURCE
@@ -37,12 +21,6 @@ To use:
 
 // Default readable text in ELF file
 #define BOTINFO "Artemis is a harmless bot that just replicates!"
-
-#define SCAN_SCANNER_BURST 100 // How many packets to send out each burst
-#define SCAN_SCANNER_ERRMAX 200 // Max amount of errors before _exit(0);
-#define SCAN_SCANNER_MAXCON 10 // Maximum connections
-#define SCAN_SCANNER_SEC 5
-#define SCAN_SCANNER_USEC 0
 
 /* Normal headers */
 #include <arpa/inet.h>

