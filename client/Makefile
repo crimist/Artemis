@@ -5,7 +5,7 @@ DFLAGS=-DDEBUG -g -ggdb -Werror -Wshadow -Wall -Wextra -Wpedantic
 RFLAGS=-s -static
 # clang 3.9 actually has -flto working easy
 CC=clang-3.9
-FILENAME=serpent
+FILENAME=artemis
 
 debug: src/*.c
 	${CC} ${CFLAGS} ${DFLAGS} -o ${FILENAME} src/*.c

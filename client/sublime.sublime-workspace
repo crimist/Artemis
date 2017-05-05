@@ -67,14 +67,6 @@
 	},
 	"buffers":
 	[
-		{
-			"file": "/C/Users/DICK/Desktop/p2p/src/main.c",
-			"settings":
-			{
-				"buffer_size": 0,
-				"line_ending": "Windows"
-			}
-		}
 	],
 	"build_system": "",
 	"build_system_choices":
@@ -130,139 +122,13 @@
 	},
 	"expanded_folders":
 	[
-		"/C/Users/DICK/Desktop/bot",
-		"/C/Users/DICK/Desktop/bot/src"
+		"/C/Users/DICK/Desktop/Artemis/client",
+		"/C/Users/DICK/Desktop/Artemis/client/include",
+		"/C/Users/DICK/Desktop/Artemis/client/src"
 	],
 	"file_history":
 	[
-		"/C/Users/DICK/Desktop/p2p/Makefile",
-		"/C/Users/DICK/Desktop/p2p/src/main.c",
-		"/C/Users/DICK/Desktop/tor-0.3.0.6/tor-0.3.0.6/configure",
-		"/C/Users/DICK/Desktop/bot/include/attk.h",
-		"/C/Users/DICK/Desktop/bot/include/scan.h",
-		"/C/Users/DICK/Desktop/bot/include/rand.h",
-		"/C/Users/DICK/Desktop/bot/include/process.h",
-		"/C/Users/DICK/Desktop/bot/include/obfsc.h",
-		"/C/Users/DICK/Desktop/bot/include/comm.h",
-		"/C/Users/DICK/Desktop/bot/include/debug.h",
-		"/C/Users/DICK/Desktop/bot/include/func.h",
-		"/C/Users/DICK/Desktop/bot/include/ipv4.h",
-		"/C/Users/DICK/Desktop/bot/include/main.h",
-		"/C/Users/DICK/Desktop/bot/src/attk.c",
-		"/C/Users/DICK/Desktop/bot/src/comm.c",
-		"/C/Users/DICK/Desktop/bot/src/debug.c",
-		"/C/Users/DICK/Desktop/bot/src/func.c",
-		"/C/Users/DICK/Desktop/bot/src/ipv4.c",
-		"/C/Users/DICK/Desktop/bot/src/main.c",
-		"/C/Users/DICK/Desktop/bot/src/obfsc.c",
-		"/C/Users/DICK/Desktop/bot/src/process.c",
-		"/C/Users/DICK/Desktop/bot/src/rand.c",
-		"/C/Users/DICK/Desktop/bot/src/scan.c",
-		"/C/Users/DICK/Desktop/Code/nix bots/mirai/mirai.src/mirai/bot/scanner.c",
-		"/C/Users/DICK/Desktop/bot/sublime.sublime-project",
-		"/C/Users/DICK/Desktop/bot/serpent",
-		"/C/Users/DICK/Desktop/bot/updatevm.sh",
-		"/C/Users/DICK/Desktop/Code/nix bots/mirai/mirai.src/mirai/bot/util.c",
-		"/C/Users/DICK/Desktop/Code/nix bots/mirai/mirai.src/mirai/bot/includes.h",
-		"/C/Users/DICK/Desktop/Code/nix bots/mirai/mirai.src/mirai/bot/main.c",
-		"/C/Users/DICK/Desktop/Code/nix bots/mirai/mirai.src/mirai/bot/scanner.h",
-		"/C/Users/DICK/Hacking/cudaHashcat-2.01/wordlist/writers.txt",
-		"/C/Users/DICK/Desktop/bot/_clang-format",
-		"/C/Users/DICK/Desktop/bot/Makefile",
-		"/E/tmp/sh.sh",
-		"/D/debug3.grf",
-		"/C/Users/DICK/Desktop/bot/build/Makefile",
-		"/C/Users/DICK/Desktop/bot/build/intl/conftest.c",
-		"/C/Users/DICK/Desktop/;)",
-		"/C/Users/DICK/Desktop/bot/test/rand.c.245t.statistics",
-		"/C/Users/DICK/Desktop/bot/test/attk.c.001t.tu",
-		"/C/Users/DICK/Desktop/BD0.2.82Windows/README.md",
-		"/C/Users/DICK/Desktop/symlinks/bf4/start.bat",
-		"/C/Users/DICK/Desktop/symlinks/bf4/end.bat",
-		"/C/Users/DICK/Desktop/kms.txt",
-		"/C/Program Files/Steam/steamapps/appmanifest_107410.acf",
-		"/C/Program Files/Steam/steamapps/appmanifest_10190.acf",
-		"/C/Program Files/Steam/steamapps/appmanifest_10180.acf",
-		"/C/Program Files/Steam/steamapps/appmanifest_394510.acf",
-		"/C/Program Files/Steam/steamapps/libraryfolders.vdf",
-		"/C/Users/DICK/Desktop/bot/tmp/tmp.c",
-		"/C/Users/DICK/Desktop/bot/test/scan.c.165t.optimized",
-		"/C/Users/DICK/Desktop/bot/test/main.c.165t.optimized",
-		"/C/Users/DICK/Desktop/bot/test/comm.c.158t.cplxlower0",
-		"/C/Users/DICK/Desktop/bot/test/comm.c.038t.inline_param2",
-		"/C/Users/DICK/Desktop/bot/test/comm.c.019t.einline",
-		"/C/Users/DICK/Desktop/bot/test/comm.c.018t.inline_param1",
-		"/C/Users/DICK/Desktop/bot/test/comm.c.011t.eh",
-		"/C/Users/DICK/Desktop/bot/test/comm.c.003t.original",
-		"/C/Users/DICK/Desktop/bot/test/comm.c.008t.lower",
-		"/E/South Park - The Stick of Truth/WinSCP.ini",
-		"/E/South Park - The Stick of Truth/SKIDROW.ini",
-		"/C/Users/DICK/Recycle Bin/Griff/Griffin",
-		"/C/Users/DICK/Recycle Bin/Facebook Passwords.txt",
-		"/C/Users/DICK/Desktop/bot/test/comm.c.165t.optimized",
-		"/C/Users/DICK/Desktop/bot/test/comm.c.245t.statistics",
-		"/C/Users/DICK/Desktop/bot/test/inline.txt",
-		"/C/Users/DICK/Desktop/bot/test/debug.c.165t.optimized",
-		"/C/Users/DICK/Desktop/bot/test/process.c.165t.optimized",
-		"/C/Users/DICK/Desktop/bot/test/comm.c.181r.reginfo",
-		"/C/Users/DICK/Desktop/bot/test/comm.c.243r.final",
-		"/C/Users/DICK/Desktop/bot/test/comm.c.169r.jump",
-		"/C/Users/DICK/Desktop/bot/test/main.c.001t.tu",
-		"/C/Users/DICK/Desktop/bot/test/main.c.012t.cfg",
-		"/C/Users/DICK/Desktop/bot/test/main.c.037t.release_ssa",
-		"/C/Users/DICK/Desktop/bot/test/main.c.003t.original",
-		"/C/Users/DICK/Desktop/bot/test/main.c.004t.gimple",
-		"/C/Users/DICK/Desktop/bot/test/main.c.007t.omplower",
-		"/C/Users/DICK/Desktop/bot/test/main.c.008t.lower",
-		"/C/Users/DICK/Desktop/bot/test/main.c.011t.eh",
-		"/C/Users/DICK/Desktop/bot/test/main.c.158t.cplxlower0",
-		"/C/Users/DICK/Desktop/bot/test/main.c.245t.statistics",
-		"/C/Users/DICK/Desktop/bot/test/main.c.016t.ssa",
-		"/C/Users/DICK/Desktop/bot/test/main.c.017t.veclower",
-		"/C/Users/DICK/Desktop/bot/test/main.c.019t.einline",
-		"/C/Users/DICK/Desktop/bot/test/main.c.038t.inline_param2",
-		"/C/Users/DICK/Desktop/bot/test/main.c.018t.inline_param1",
-		"/C/Users/DICK/Desktop/bot/strace.txt",
-		"/C/Users/DICK/Desktop/bot/strings.txt",
-		"/C/Users/DICK/AppData/Local/Temp/fontdrvhost.DMP",
-		"/C/Users/DICK/Desktop/bot/test.c",
-		"/C/Users/DICK/Desktop/bot/src/main.c.bak.bak",
-		"/C/Users/DICK/Desktop/bot/include/hds.h",
-		"/C/Users/DICK/Desktop/bot/src/build.sh",
-		"/C/Users/DICK/Desktop/httpserver/include/class/client.hpp",
-		"/C/Users/DICK/Desktop/httpserver/include/class/queue.hpp",
-		"/C/Users/DICK/Desktop/httpserver/include/accept.hpp",
-		"/C/Users/DICK/Desktop/httpserver/include/log.hpp",
-		"/C/Users/DICK/Desktop/httpserver/include/work.hpp",
-		"/C/Users/DICK/Desktop/httpserver/include/main.hpp",
-		"/C/Users/DICK/Desktop/httpserver/src/main.cpp",
-		"/C/Users/DICK/Desktop/httpserver/http.log",
-		"/C/Users/DICK/Desktop/httpserver/tmp.cpp",
-		"/C/Users/DICK/Desktop/passwd",
-		"/C/Users/DICK/Desktop/download",
-		"/C/Users/DICK/Desktop/passwd (1)",
-		"/C/Users/DICK/AppData/Local/Temp/passwd",
-		"/C/Users/DICK/Desktop/scanner/includes/queue.hpp",
-		"/C/Users/DICK/Desktop/scanner/src/main.cpp",
-		"/C/Users/DICK/Desktop/scanner/includes/main.hpp",
-		"/C/Users/DICK/Desktop/scanner/src/ip.cpp",
-		"/C/Users/DICK/Desktop/Code/amplifcation/scripts/ntp.c",
-		"/C/Users/DICK/Desktop/scanner/Makefile",
-		"/C/Users/DICK/Desktop/Gaming/tmp/32277/nginx-1.4.0-exp/frag.c",
-		"/C/Users/DICK/Desktop/bot/src/serpent_comm.c",
-		"/C/Users/DICK/Desktop/bcm963xx_gpl_t07_consumer_release/bcm963xx_gpl_t07_consumer/bcmdrivers/opensource/net/bcmsmux/impl1/smux.c",
-		"/C/Users/DICK/Desktop/bcm963xx_gpl_t07_consumer_release/bcm963xx_gpl_t07_consumer/kernel/linux/Makefile",
-		"/C/Users/DICK/Desktop/bcm963xx_gpl_t07_consumer_release/bcm963xx_gpl_t07_consumer/bcmdrivers/opensource/net/bcmsmux/impl1/Makefile",
-		"/C/Users/DICK/Desktop/bcm963xx_gpl_t07_consumer_release/bcm963xx_gpl_t07_consumer/bcmdrivers/opensource/char/serial/impl1/bcm63xx_cons.c",
-		"/C/Users/DICK/Desktop/bcm963xx_gpl_t07_consumer_release/consumer_install",
-		"/C/Users/DICK/Desktop/bcm963xx_gpl_t07_consumer_release/bcm963xx_gpl_t07_consumer/bcmdrivers/broadcom/char/adsl/impl1/adsl_phy963268BGW.bin_save",
-		"/C/Users/DICK/Hacking/ddosim-0.2/senderThread.cpp",
-		"/C/Users/DICK/Hacking/ddosim-0.2/captureThread.cpp",
-		"/C/Users/DICK/Desktop/lewdpissoff.txt",
-		"/C/Users/DICK/Desktop/consuption/Christmas.txt",
-		"/C/Users/DICK/Desktop/soap/setup.py",
-		"/C/Users/DICK/Desktop/soap/soap.py",
-		"/C/Users/DICK/Desktop/IPCAM Exploit/dumper.py"
+		"/C/Users/DICK/Desktop/Artemis/client/sublime.sublime-workspace"
 	],
 	"find":
 	{
@@ -281,6 +147,11 @@
 		"case_sensitive": false,
 		"find_history":
 		[
+			"sclose",
+			"void sclose\\(",
+			"sclose",
+			"TelnetScanner",
+			"getRandomIP",
 			"errno",
 			"iph",
 			"LOCAL_ADDR",
@@ -403,12 +274,7 @@
 			"mfork",
 			"numpids",
 			"pids",
-			"listFork",
-			"_DEBUG",
-			"ifndef",
-			"srand",
-			"init_rand",
-			"int main("
+			"listFork"
 		],
 		"highlight": true,
 		"in_selection": false,
@@ -449,37 +315,8 @@
 	"groups":
 	[
 		{
-			"selected": 0,
 			"sheets":
 			[
-				{
-					"buffer": 0,
-					"file": "/C/Users/DICK/Desktop/p2p/src/main.c",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 0,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								0,
-								0
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/C++/C.sublime-syntax"
-						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 0,
-					"type": "text"
-				}
 			]
 		},
 		{
