@@ -1,4 +1,4 @@
-# Serpent Makefile
+# Artemis Makefile
 
 CFLAGS=-std=gnu99 -O2 -march=native -flto -fuse-ld=gold
 DFLAGS=-DDEBUG -g -ggdb -Werror -Wshadow -Wall -Wextra -Wpedantic
