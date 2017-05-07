@@ -7,8 +7,33 @@
 #define SCAN_SCANNER_USEC 0
 
 // Need static as it's only in this function
+#define usersize (sizeof(usernames) / sizeof(unsigned char *))
+#define passsize (sizeof(passwords) / sizeof(unsigned char *))
 
-static char *usernames[] =
+const static char *userprompts[] =
+{
+	"user",
+	"login",
+};
+
+const static char *passprompts[] =
+{
+	"password",
+};
+
+const static char *failstrs[] =
+{
+	"invalid",
+	"incorrect",
+	"fail",
+	"again",
+	"wrong",
+	"denied",
+	"error",
+	"bad",
+};
+
+const static char *usernames[] =
 {
 	"root\r\n\0", // root:root
 	"root\r\n\0", // root:1234
@@ -18,7 +43,7 @@ static char *usernames[] =
 	"CISCO\r\n\0", // CISCO:CISCO
 };
 
-static char *passwords[] =
+const static char *passwords[] =
 {
 	"root\r\n\0", // root:root
 	"1234\r\n\0", // root:1234
