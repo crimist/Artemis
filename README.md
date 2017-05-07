@@ -53,6 +53,7 @@ Client side is inspired from both [BashLite](https://en.wikipedia.org/wiki/BASHL
 * **Self replication** - Self replicating bot allows the botnet to have an exponential growth in power without any effort.
 * **DDoS?** - I might add DDoS features later though I'm not sure if I wanna weaponize the bot.
 * **Info gathering** - It already has features that gather info but I might add more later.
+* **Update** - Let the bot update itself to the newest version.
 
 ## Credits
 
