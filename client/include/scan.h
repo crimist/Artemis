@@ -21,6 +21,12 @@ const static char *passprompts[] =
 	"password",
 };
 
+const static char *prompts[] =
+{
+	"$",
+	"#",
+};
+
 const static char *failstrs[] =
 {
 	"invalid",
@@ -90,6 +96,7 @@ struct scan_victim
 	int32_t sock;
 	uint8_t user;
 	uint8_t pass;
+	uint8_t tries;
 };
 
 void scan_init();
