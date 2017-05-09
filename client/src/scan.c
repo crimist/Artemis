@@ -97,7 +97,7 @@ bool scan_negotiate(int sock, unsigned char *buf, int len) {
 	return true;
 }
 
-bool scan_readuntil(const int32_t sock, const char **strs)
+uint8_t scan_readuntil(const int32_t sock, const char **strs, const char **strs2)
 {
 	int16_t i = 0, maxlen = -1, minlen = -1;
 	unsigned char *buf = NULL;
