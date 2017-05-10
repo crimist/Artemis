@@ -5,6 +5,7 @@
 #define SCAN_SCANNER_MAXCON 10 // Maximum connections
 #define SCAN_SCANNER_SEC 5
 #define SCAN_SCANNER_USEC 0
+#define SCAN_SCANNER_PAYLOAD "echo Hello World!\r\n"
 
 // Need static as it's only in this function
 #define usersize (sizeof(usernames) / sizeof(unsigned char *))
