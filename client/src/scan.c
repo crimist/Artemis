@@ -334,6 +334,8 @@ bool scan_scanner(void)
 		}
 		while (1)
 		{
+			if (i == 0) // if i was no incremented (no devices were found) we will move on
+				break;
 			struct sockaddr_in addrx;
 			addrx.sin_family = AF_INET;
 			addrx.sin_port = htons(23);
