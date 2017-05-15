@@ -2,6 +2,8 @@
 
 #ifdef DEBUG
 
+#include <stdarg.h>
+
 void _printd(const char *file, const char *func, const int line, const char *fmt, ...);
 void _pktd(const char *file, const char *func, const int line, struct iphdr *iph, struct tcphdr *tcph);
 

