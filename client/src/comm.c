@@ -93,8 +93,9 @@ static inline __attribute__((always_inline)) uint16_t _mhz() // Getz CPU speed i
 	return 0;
 }
 
-// Why the fuck does static inline work but inline on its own not work?
+// Why does static inline work but inline on its own not work?
 // Gotta look this up when I get back on wifi
+
 static inline __attribute__((always_inline)) uint8_t _bit(void) // Gets 32 or 64 bit arch
 {
 	if ((size_t) -1 > 0xffffffffUL)

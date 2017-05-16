@@ -26,7 +26,7 @@ void scan_init(void)
 		return; // We are parent or it failed, lets go home
 	else // Child has spawned and we are the child
 	{
-		// if (proc_root()) // Make it check for root and shit later
+		// if (proc_root()) // Make it check for root and stuff later
 		if (scan_scanner() == false)
 			scan_able = false;
 		_exit(0);

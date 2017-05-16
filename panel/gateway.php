@@ -1,5 +1,5 @@
 ﻿<?php
-	/* Credits to linkedcabin for a lot of this shit */
+	/* Credits to linkedcabin for a lot of this stuff */
 	/* Really helped me learn php and PDO :) */
 
 	require_once 'include/main.php';
@@ -178,7 +178,7 @@
 	}
 	else
 	{
-		logx("How the fuck did I get here", 1);
+		logx("How did I get here", 1);
 	}
 		
 	/* Check for single bot tasks */

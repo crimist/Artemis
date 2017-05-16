@@ -137,7 +137,7 @@
 
 <!-- Page changers -->
 <?php
-	/* What the fuck have I created */
+	/* What the hell have I created */
 	if ($id2fetch != 1)
 	{
 		echo "<a href=\"?p=bots&list=";
