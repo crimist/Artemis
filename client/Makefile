@@ -1,10 +1,14 @@
 # Artemis Makefile
 
-CFLAGS=-std=gnu99 -O2 -march=native -flto -fuse-ld=gold
+# LTO (Link time optimization?) It's really annoying to set up compiling for it so I'll leave it off
+#CFLAGS=-std=gnu99 -O2 -march=native -flto -fuse-ld=gold
+#CC=clang-3.9
+
+# Non LTO
+CFLAGS=-std=gnu99 -O2 -march=native
 DFLAGS=-DDEBUG -g -ggdb -Werror -Wshadow -Wall -Wextra -Wpedantic
 RFLAGS=-s -static
-# clang 3.9 actually has -flto working easy
-CC=clang-3.9
+CC=clang
 FILENAME=artemis
 
 debug: src/*.c
@@ -15,8 +19,8 @@ release: src/*.c
 
 test: src/*.c
 	cd test && \
-		gcc ${CFLAGS} ${DFLAGS} ../src/*.c -fdump-tree-all && \
-		rm a.out
+	gcc ${CFLAGS} ${DFLAGS} ../src/*.c -fdump-tree-all && \
+	rm a.out
 
 clean:
 	rm -f ${FILENAME}

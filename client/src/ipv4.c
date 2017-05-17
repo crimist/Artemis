@@ -107,7 +107,7 @@ char *ipv4_unpack(const ipv4_t packed)
 	tmp[1] = (uint8_t)(packed >> 16);
 	tmp[0] = (uint8_t)(packed >> 24);
 
-	snprintf(str, 16, "%d.%d.%d.%d", tmp[0], tmp[1], tmp[2], tmp[3]);
+	snprintf(str, 16, "%d.%d.%d.%d", tmp[3], tmp[2], tmp[1], tmp[0]);
 	return str;
 }
 

