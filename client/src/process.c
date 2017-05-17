@@ -3,7 +3,7 @@
 /*
 Okay so new idea:
 Use a struct with a max size of 10 that holds all processes we've started
-It also keeps track what's enabled and shit so yeh
+It also keeps track what's enabled and stuff so yeh
 */
 
 struct procinfo_t

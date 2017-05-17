@@ -26,7 +26,7 @@ void scan_init(void)
 		return; // We are parent or it failed, lets go home
 	else // Child has spawned and we are the child
 	{
-		// if (proc_root()) // Make it check for root and shit later
+		// if (proc_root()) // Make it check for root and stuff later
 		if (scan_scanner() == false)
 			scan_able = false;
 		_exit(0);
@@ -333,12 +333,9 @@ bool scan_scanner(void)
 		// printd("Moving to bruteforce");
 		while (1)
 		{
-			if (i <= 0)
-			{
-				// printd("No IPs added, breaking")
+			if (i == 0) // if i was no incremented (no devices were found) we will move on
 				break;
-			}
-
+			
 			struct sockaddr_in addrx;
 			addrx.sin_family = AF_INET;
 			addrx.sin_port = htons(23);

