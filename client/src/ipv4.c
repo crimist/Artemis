@@ -145,10 +145,10 @@ ipv4_t ipv4_random_public(void)
 		ipState[2] = rand() % 255;
 		ipState[3] = rand() % 255;
 	}
-	while	((ipState[0] == 0) ||			  // 0.0.0.0/8
-			(ipState[0] == 127) ||			  // 127.0.0.0/8
-			(ipState[0] == 10) ||			  // 10.0.0.0/8
-			((ipState[0] == 192) && (ipState[1] == 168)) // 192.0.0.0/16
+	while	((ipState[0] == 0) ||			  				// 0.0.0.0/8
+			(ipState[0] == 127) ||			  				// 127.0.0.0/8
+			(ipState[0] == 10) ||			  				// 10.0.0.0/8
+			((ipState[0] == 192) && (ipState[1] == 168)) 	// 192.168.0.0/16
 			);
 
 	return ipv4_pack(ipState[0], ipState[1], ipState[2], ipState[3]);

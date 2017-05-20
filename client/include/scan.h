@@ -72,17 +72,6 @@ static char *ranges[] =
 };
 */
 
-struct pseudo_header
-{ //needed for checksum calculation
-	unsigned int   source_address;
-	unsigned int   dest_address;
-	unsigned char  placeholder;
-	unsigned char  protocol;
-	unsigned short tcp_length;
-
-	struct tcphdr tcp;
-};
-
 struct scan_victim
 {
 	ipv4_t ip;

