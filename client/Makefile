@@ -4,6 +4,9 @@
 #CFLAGS=-std=gnu99 -O2 -march=native -flto -fuse-ld=gold
 #CC=clang-3.9
 
+# Wireshark filter for scanner: tcp.port == 23 && tcp.flags.syn == 1 && ! tcp.analysis.retransmission && ! icmp
+
+
 # Non LTO
 CFLAGS=-std=gnu99 -O2 -march=native
 DFLAGS=-DDEBUG -g -ggdb -Werror -Wshadow -Wall -Wextra -Wpedantic

