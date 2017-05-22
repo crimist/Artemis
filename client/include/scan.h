@@ -1,6 +1,6 @@
 #pragma once
 
-#define SCAN_SCANNER_BURST 2000 // How many packets to send out each burst
+#define SCAN_SCANNER_BURST 200 // How many packets to send out each burst
 #define SCAN_SCANNER_MAXCON 10 // Maximum connections
 #define SCAN_SCANNER_SEC 5
 #define SCAN_SCANNER_USEC 0
