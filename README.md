@@ -2,6 +2,9 @@
 IoT malware that I'm writing for fun. 
 
 ## General About
+
+**Warning:** This project isn't meant to be portable. It's meant to compile on my computer but maybe not yours. I may or may not make it portable later but well have to wait and see about that.
+
 The name comes from the Athena malware which was a HTTP bot for windows.
 Athena was the first botnet I ever "set up" and got me into malware and botnets.
 
