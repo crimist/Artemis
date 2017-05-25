@@ -45,14 +45,14 @@ ipv4_t ipv4_pack(const uint8_t octet1, const uint8_t octet2, const uint8_t octet
 bool ipv4_getinfo(ipv4_t *ip)
 {
 
-	int fd;
+	int32_t fd;
 	struct sockaddr_in addr;
 	socklen_t addr_len = sizeof (addr);
 
 	if ((fd = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
 		return false;
 
-	addr.sin_family = AF_INET;
+	addr.sin_family = AF_INET; 
 	addr.sin_addr.s_addr = ipv4_pack(8, 8, 8, 8);
 	addr.sin_port = htons(53);
 
