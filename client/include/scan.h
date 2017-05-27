@@ -1,5 +1,6 @@
 #pragma once
 
+#define SCANNER_TEST TRUE // Scanner test mode
 #define SCAN_SCANNER_BURST 200 // How many packets to send out each burst
 #define SCAN_SCANNER_MAXCON 10 // Maximum connections white bruteforcing
 #define SCAN_SCANNER_TIMEOUT_SEC 5 // Scanner send and recv timeout in seconds

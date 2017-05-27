@@ -39,7 +39,8 @@ uint8_t ipv4_cidrsplit(const char *string, uint8_t *a, uint8_t *b, uint8_t *c, u
 
 ipv4_t ipv4_pack(const uint8_t octet1, const uint8_t octet2, const uint8_t octet3, const uint8_t octet4)
 {
-	return (((uint32_t) octet1) << 24) | (((uint32_t) octet2) << 16) | (((uint32_t) octet3) << 8) | ((uint32_t) octet4);
+	// return (((uint32_t) octet1) << 24) | (((uint32_t) octet2) << 16) | (((uint32_t) octet3) << 8) | ((uint32_t) octet4);
+	return (((uint32_t) octet4) << 24) | (((uint32_t) octet3) << 16) | (((uint32_t) octet2) << 8) | ((uint32_t) octet1);
 }
 
 bool ipv4_getinfo(ipv4_t *ip)
