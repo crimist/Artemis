@@ -16,7 +16,7 @@ int main(void)
     comm_init();
     printd("comm_init ok")
 
-#ifndef DEBUG
+#   ifndef DEBUG
     prctl(PR_SET_NAME, MAIN_NAME, 0, 0, 0); // Change the process name
 
     pid_t pid, sid; /* Our process ID and Session ID */
@@ -51,9 +51,14 @@ int main(void)
 
     // Put some info about the bot in the ELF file for people to read
     char *info = MAIN_BOTINFO;
-#endif /* DEBUG */
+#   endif /* DEBUG */
 
     printd("Starting!")
+#   ifdef SCANNER_TEST
+    printd("Scanner test mode detected!")
+    scan_scanner();
+    exit(1);
+#   endif
     while (1)
     {
 		if (comm_comm() == false)

