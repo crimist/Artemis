@@ -131,6 +131,17 @@ static inline __attribute__((always_inline)) void xselect(int32_t fd)
 	select(fd + 1, &fdset, NULL, NULL, &timeout);
 }
 
+static inline __attribute__((always_inline)) bool structcmp(unsigned char *buf, const char **str)
+{
+	while (*str != NULL)
+	{
+		printf("Comparing \"%s\" -> \"%s\"\n", buf, *str);
+		if (subcasestr((const char *)buf, *str++) != -1)
+			return true;
+	}
+	return false;
+}
+
 uint8_t scan_readuntil(const int32_t sock, const char **strs, const char **strs2)
 {
 	/*
@@ -173,29 +184,12 @@ uint8_t scan_readuntil(const int32_t sock, const char **strs, const char **strs2
 	I guess the strcmp() like func wasn't working so anyway I mreally messed up
 	*/
 
-	int16_t i = 0, maxlen = -1, minlen = 1024;
+	int16_t i = 0;
 	unsigned char *buf = malloc(sizeof(unsigned char *));
 
-	while (*strs != NULL)
-	{
-		// printf("%s\n", *strs);
-		int16_t _len = strlen(*strs++);
-		if (_len > maxlen)
-			maxlen = _len;
-		if (_len < minlen)
-			minlen = _len;
-	}
-	while (*strs2 != NULL)
-	{
-		// printf("%s\n", *strs2);
-		int16_t _len = strlen(*strs2++);
-		if (_len > maxlen)
-			maxlen = _len;
-		if (_len < minlen)
-			minlen = _len;
-	}
-
 	unsigned char mbuf[1024];
+	zero(mbuf, sizeof(mbuf));
+
 	while (1)
 	{
 		xselect(sock);
@@ -204,7 +198,7 @@ uint8_t scan_readuntil(const int32_t sock, const char **strs, const char **strs2
 			printd("Error %d: %s", errno, strerror(errno));
 			return 0;
 		}
-		#warning Instead of checking for 0xFF every read why not make that a stage in the switch() on the scanner
+		#pragma message("Instead of checking for 0xFF every read why not make that a stage in the switch() on the scanner")
 		if (*buf == TELNET_CMD)
 		{
 			uint8_t longbuf[2];
@@ -219,27 +213,12 @@ uint8_t scan_readuntil(const int32_t sock, const char **strs, const char **strs2
 			}
 		}
 		else
-		{
 			mbuf[i++] = *buf;
-			// printf("mbuf = \"%s\"\n", mbuf);
-			// printf("%x\n", mbuf[strlen((const char *)mbuf) - 1]);
-		}
-		if (i >= minlen)
-		{
-			#warning This needs to be fixed. Because of the min max stuff it's already gone thru all and is null. I needa change that
-			while (*strs != NULL)
-			{
-				printf("Comparing %s to %s\n", mbuf, *strs);
-				if (subcasestr((const char *)mbuf, *strs++) != -1)
-					return 1;
-			}
-			while (*strs2 != NULL)
-			{
-				printf("Comparing %s to %s\n", mbuf, *strs2);
-				if (subcasestr((const char *)mbuf, *strs2++) != -1)
-					return 2;
-			}
-		}
+
+		if (structcmp(mbuf, strs) == true)
+			return 1;
+		if (structcmp(mbuf, strs2) == true)
+			return 2;
 	}
 	return 0;
 }
@@ -581,7 +560,7 @@ bool scan_scanner(void)
 									victim_table[i].state = FINISHED;
 								break;
 							case 2:
-								printd("%d->%s Username success", i, ipv4_unpack(victim_table[i].ip));
+								printd("%d->%s Found password prompt", i, ipv4_unpack(victim_table[i].ip));
 								victim_table[i].state = PASSWORD;
 								break;
 						}
