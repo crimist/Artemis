@@ -253,8 +253,12 @@ bool scan_scanner(void)
 	/* sockaddr struct and checksum struct */
 	struct sockaddr_in addr;
 
+#	ifdef SCANNER_TEST
+	LOCAL_ADDR = ipv4_pack(127, 0, 0, 1);
+#	else
 	if (ipv4_getinfo(&LOCAL_ADDR) == false)
 		goto end;
+#	endif
 	printd("Local info: %d %s", LOCAL_ADDR, ipv4_unpack(LOCAL_ADDR));
 
 	// Set the random source port
@@ -313,7 +317,11 @@ bool scan_scanner(void)
 
 	while (1)
 	{
+#		ifdef SCANNER_TEST
+		for (i = 0; i < 1; i++) // Send one packet if we are testing the scanner
+#		else
 		for (i = 0; i < SCAN_SCANNER_BURST; i++)
+#		endif
 		{
 #			ifdef SCANNER_TEST
 			iph->daddr = ipv4_pack(127, 0, 0, 1);
@@ -333,7 +341,9 @@ bool scan_scanner(void)
 
 			// Send the packet
 			sendto(sock, datagram, sizeof(struct iphdr) + sizeof(struct tcphdr), 0, (struct sockaddr *)&addr, sizeof(addr));
-			break;
+#			ifdef SCANNER_TEST
+			sleep(1); // Don't spam packets if we're testing
+#			endif
 		}
 		i = 0;
 		while (1)
