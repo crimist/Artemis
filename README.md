@@ -32,15 +32,6 @@ The server side is written in PHP using PDO connection to a mySQL database.
 
 ### Planned features
 
-~~* **Command page cleanup** - Make the command page pretty. Ooo shiny...
-* **Command log page** - A page that shows commands executed by bots chronologically.
-* **Logs** - Log all action that clients do and let admins read it. Features include:
-  * Home page accessed with IP address.
-  * Failed log in attempts with IP address.
-  * Successful log in attempts with IP address.
-  * Show commands added.
-* **Multi user support** - If admin be able to create new users form user panel.~~
-
 See the [Projects](https://github.com/Advnet/Artemis/projects) for this Repository.
 
 ## Client
@@ -54,11 +45,6 @@ Client side is inspired from both [BashLite](https://en.wikipedia.org/wiki/BASHL
 * **Uhhh...** - The bot isn't really complete so it's pretty bare feature wise right now...
 
 ### Planned features
-
-~~* **Self replication** - Self replicating bot allows the botnet to have an exponential growth in power without any effort.
-* **DDoS?** - I might add DDoS features later though I'm not sure if I wanna weaponize the bot.
-* **Info gathering** - It already has features that gather info but I might add more later.
-* **Update** - Let the bot update itself to the newest version.~~
 
 See the [Projects](https://github.com/Advnet/Artemis/projects) for this Repository.
 
