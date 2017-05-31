@@ -146,7 +146,7 @@ static inline __attribute__((always_inline)) void processRecv(char *data)
 
 bool comm_comm(void)
 {
-	printd("POSTing")
+	printd("POSTing");
 	char *reply = calloc(2048, sizeof(char *)), *message = calloc(1024, sizeof(char *)), *postreq;
 	int sock, postlen;
 	struct sockaddr_in server;
@@ -172,7 +172,7 @@ bool comm_comm(void)
 					comminfo.arch);
 	if (fsize == -1)
 	{
-		printd("Error creating postreq")
+		printd("Error creating postreq");
 		goto failure2;
 	}
 	postlen = strlen(postreq);

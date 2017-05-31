@@ -7,7 +7,8 @@
 #define SCAN_SCANNER_TIMEOUT_USEC 0 // Scanner send and recv timeout in useconds
 #define SCAN_SCANNER_STIMEOUT_SEC 1 // Scanner select timeout in seconds
 #define SCAN_SCANNER_STIMEOUT_USEC 0 // Scanner select timeout in useconds
-#define SCAN_SCANNER_PAYLOAD "echo Hello World!\r\n\0"
+#define SCAN_SCANNER_PAYLOAD "echo Hello World!\r\n"
+#define SCAN_SCANNER_PAYLOAD_LEN 19
 
 #ifdef SCANNER_TEST
 #ifndef DEBUG

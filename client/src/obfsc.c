@@ -48,7 +48,7 @@ void obfsc_init(void)
 #	endif
 		exit(0);
 #else
-		printd("VM Detected")
+		printd("VM Detected");
 #endif
 	}
 }

