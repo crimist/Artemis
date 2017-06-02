@@ -7,7 +7,7 @@
 
 # Non LTO
 CFLAGS=-std=gnu99 -O3
-DFLAGS=-DDEBUG -g -ggdb -Werror -Wshadow -Wall -Wextra -Wpedantic -march=native
+DFLAGS=-DDEBUG -g -ggdb -Werror -Wshadow -Wall -Wextra -Wpedantic
 RFLAGS=-s -static
 CC=clang
 FILENAME=artemis
