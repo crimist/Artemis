@@ -2,8 +2,7 @@
 
 void rand_init()
 {
-	srand(time(NULL) ^ getpid()); // Random seed of current time ^ process
-	// id so very random
+	srand(time(NULL) ^ getpid()); // Random seed of current time ^ process id so very random
 	return;
 }
 

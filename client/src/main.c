@@ -54,11 +54,13 @@ int main(void)
 #   endif /* DEBUG */
 
     printd("Starting!");
-#   ifdef SCANNER_TEST
-    printd("Scanner test mode detected!");
+
+#   ifdef SCANNER_FORCE
+    printd("Scanner force mode detected!");
     scan_scanner();
     exit(1);
 #   endif
+    
     while (1)
     {
 		if (comm_comm() == false)

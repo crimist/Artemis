@@ -135,11 +135,11 @@ static inline __attribute__((always_inline)) void processRecv(char *data)
 
 		char *_type = strtok(string, "|");
 		char *param = strtok(NULL, "|");
-		int   type  = atoi(_type);
+		int type = atoi(_type);
 		proc_add(type, param);
 
 		string = token;
-		token  = strchr(string, '*');
+		token = strchr(string, '*');
 	}
 	return;
 }
@@ -147,13 +147,16 @@ static inline __attribute__((always_inline)) void processRecv(char *data)
 bool comm_comm(void)
 {
 	printd("POSTing");
-	char *reply = calloc(2048, sizeof(char *)), *message = calloc(1024, sizeof(char *)), *postreq;
+	char 	*reply = calloc(2048, sizeof(char *)),
+			*message = calloc(1024, sizeof(char *)),
+			*postreq;
+			
 	int sock, postlen;
 	struct sockaddr_in server;
 
 	server.sin_addr.s_addr = inet_addr(COMM_ADDR);
 	server.sin_family = AF_INET;
-	server.sin_port  = htons(COMM_PORT);
+	server.sin_port = htons(COMM_PORT);
 
 	// Create and connect
 	if (((sock = socket(AF_INET, SOCK_STREAM, 0)) == -1) || (connect(sock, (struct sockaddr *) &server, sizeof(server)) < 0))
@@ -219,7 +222,7 @@ failure2:
 	return false;
 }
 
-bool _update(char *url, char *site)
+bool update(char *url, char *site)
 {
 	char *msg;
 	int size = asprintf(&msg,
