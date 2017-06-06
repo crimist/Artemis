@@ -14,7 +14,7 @@
 #ifdef SCANNER_TEST
 #define SCANNER_FORCE TRUE
 #ifndef DEBUG
-#error Including SCANNER_TEST in a non DEBUG build
+CLANG_ERR("Including SCANNER_TEST in a non DEBUG build")
 #endif
 #endif
 

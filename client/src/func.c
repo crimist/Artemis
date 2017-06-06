@@ -1,5 +1,6 @@
 #include "../include/main.h"
 
+/* read until end or newline */
 unsigned char *fdgets(unsigned char *buffer, int bufferSize, int fd)
 {
 	int got = 1, total = 0;
@@ -12,6 +13,7 @@ unsigned char *fdgets(unsigned char *buffer, int bufferSize, int fd)
 	return got == 0 ? NULL : buffer;
 }
 
+/* get the length of the string */
 int func_strlen(const char *str)
 {
 	int i = 0;
@@ -20,6 +22,7 @@ int func_strlen(const char *str)
 	return i;
 }
 
+/* zero out a peice of memory */
 void func_zero(void *buf, int len)
 {
 	char *zero = buf;
@@ -28,6 +31,7 @@ void func_zero(void *buf, int len)
 	return;
 }
 
+/* change a string to upper case */
 void func_strupr(char *buf, int len)
 {
 	while (len--)
@@ -38,6 +42,7 @@ void func_strupr(char *buf, int len)
 	return;
 }
 
+/* find a substring in a string */
 int func_substr(char *buf, int buflen, char *find, int findlen)
 {
 	int match = 0;
@@ -55,6 +60,7 @@ int func_substr(char *buf, int buflen, char *find, int findlen)
 	return -1;
 }
 
+/* substr but it ignores case */
 int func_subcasestr(const char *buf, const char *find)
 {
 	int findlen = strlen(find), buflen = strlen(buf), match = 0;
@@ -103,6 +109,7 @@ bool func_strcmp(char *str1, char *str2)
 }
 */
 
+/* Compare two strings with a length to compare to */
 bool func_strncmp(char *str1, char *str2, int len)
 {
 	int l1 = strlen(str1), l2 = strlen(str2);
@@ -119,6 +126,7 @@ bool func_strncmp(char *str1, char *str2, int len)
 	return true;
 }
 
+/* strncmp but ignores case */
 bool func_strcasencmp(char *str1, char *str2, int len)
 {
 	int l1 = strlen(str1), l2 = strlen(str2);
@@ -135,6 +143,7 @@ bool func_strcasencmp(char *str1, char *str2, int len)
 	return true;
 }
 
+/* strcat/strncat except it'll accept arguments just like printf */
 void func_append(char *buf, const int len, const char *fmt, ...)
 {
 	va_list list;
@@ -143,6 +152,7 @@ void func_append(char *buf, const int len, const char *fmt, ...)
 	va_end(list);
 }
 
+/* Explode from PHP */
 int8_t func_explode(const char *split, const char *delim, char ***list)
 {
 	// Check for invalid pointers
@@ -152,9 +162,9 @@ int8_t func_explode(const char *split, const char *delim, char ***list)
 	// Create poiners ect.
 	char * str;
 	char * token;
-	char **templist = (char **) realloc(NULL, sizeof(*templist));
+	char **templist = (char **)realloc(NULL, sizeof(*templist));
 	char **temptemplist;
-	int    i = 0;
+	int i = 0;
 
 	// Allocate string to split
 	if ((str = strdup(split)) == NULL)
@@ -167,7 +177,7 @@ int8_t func_explode(const char *split, const char *delim, char ***list)
 	while (token != NULL)
 	{
 		temptemplist = realloc(templist, (sizeof *templist) * (i + 1));
-		templist     = temptemplist;
+		templist = temptemplist;
 
 		templist[i] = strdup(token);
 
@@ -178,17 +188,17 @@ int8_t func_explode(const char *split, const char *delim, char ***list)
 	free(str);
 	// #warning this may cause erros?
 	free(temptemplist);
-	// #endwarn
 	*list = templist;
 	return i;
 }
 
+/* Free an exploded list */
 void func_freelist(char ***list, int len)
 {
-	printf("%p\n", (void *) list);
+	// printd("%p\n", (void *) list);
 	for (int x = 0; x < len; x++)
 	{
-		printf("[%d] %p\n", x, (void *) list[x]);
+		// printd("[%d] %p\n", x, (void *) list[x]);
 		free(list[x]);
 	}
 	free(list);
@@ -197,19 +207,18 @@ void func_freelist(char ***list, int len)
 
 /*
 How to call ^
-char **list;
-int size = explode("this.is.a.string", ".", &list);
-int i;
-
-for(i = 0; i < size; i++)
+int example()
 {
+	char **list;
+	int size = explode("this.is.a.string", ".", &list);
+	for(int i = 0; i < size; i++)
 		printf("[%d] %s\n", i, list[i]);
+	freelist(list, size);
+	return 0;
 }
-freelist(list, size);
-
-return 0;
 */
 
+/* readuntil we find a string */
 bool func_readuntil(int fd, char *buffer, int buflen, const char **toFind)
 {
 	int got = 1, total = 0;
@@ -223,6 +232,7 @@ bool func_readuntil(int fd, char *buffer, int buflen, const char **toFind)
 	return false;
 }
 
+/* Count number of times a char is found in a string */
 int func_countChar(const char *string, char ch)
 {
 	int count = 0;

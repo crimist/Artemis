@@ -2,6 +2,13 @@
 
 #ifdef DEBUG
 
+/* Credits: https://clang.llvm.org/docs/UsersManual.html */
+#define STR(X) #X
+#define DEFER(M, ...) M(__VA_ARGS__)
+#define CLANG_ERR(X) _Pragma(STR(GCC error(X " at line " DEFER(STR, __LINE__))))
+#define CLANG_WRN(X) _Pragma(STR(GCC warning(X " at line " DEFER(STR, __LINE__))))
+#define CLANG_MSG(X) _Pragma(STR(message(X " at line " DEFER(STR, __LINE__))))
+
 #include <stdarg.h>
 
 void _printd(const char *file, const char *func, const int line, const char *fmt, ...);
