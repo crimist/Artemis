@@ -5,5 +5,5 @@
 #define COMM_TIMEOUT 120 // Time between posts
 #define COMM_KEY "KEY"
 
-void comm_init();
-bool comm_comm();
+void comm_init(void);
+bool comm_comm(void);

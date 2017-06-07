@@ -1,5 +1,15 @@
 #pragma once
 
+/* Credits: https://clang.llvm.org/docs/UsersManual.html */
+#define STR(X) #X
+#define DEFER(M, ...) M(__VA_ARGS__)
+#define clang_err(X) _Pragma(STR(GCC error(X " at line " DEFER(STR, __LINE__))))
+#define clang_wrn(X) _Pragma(STR(GCC warning(X " at line " DEFER(STR, __LINE__))))
+#define clang_msg(X) _Pragma(STR(message(X " at line " DEFER(STR, __LINE__))))
+#define clang_ignore(X) _Pragma("clang diagnostic push") \
+						_Pragma(STR(clang diagnostic ignored X))
+#define clang_pop _Pragma("clang diagnostic pop")
+
 #define _GNU_SOURCE
 
 #undef WEAPONIZED // Has attk.c

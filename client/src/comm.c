@@ -104,7 +104,7 @@ static inline __attribute__((always_inline)) uint8_t _bit(void) // Gets 32 or 64
 		return 32;
 }
 
-void comm_init()
+void comm_init(void)
 {
 	struct utsname uinfo;
 	uname(&uinfo);
