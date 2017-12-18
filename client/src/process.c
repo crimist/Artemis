@@ -13,20 +13,19 @@ struct procinfo_t
 	uint8_t type;	// Attack? Scan? What type of process is it
 };
 
-struct proc_t
+static struct proc_t
 {
 	struct procinfo_t p[10];
 } procs;
-// Access like procs.p[3].enabled
 
 /* Global process id list */
-bool proc_isroot = false;
+static bool procIsRoot = false;
 
 /* Initiate the process list */
 
 bool proc_root(void)
 {
-	return proc_isroot;
+	return procIsRoot;
 }
 void proc_init(void)
 {
@@ -38,16 +37,16 @@ void proc_init(void)
 	}
 
 	if (geteuid() == 0)
-		proc_isroot = true;
+		procIsRoot = true;
 
 	return;
 }
 
-int proc_add(int type, char *param)
+pid_t proc_add(uint8_t type, char *param)
 {
 	printd("Adding proccess with %d:%s", type, param);
 	uint8_t i = 0;
-	uint32_t ret;
+	pid_t ret;
 
 	ret = fork(); // Fork to create a new process
 
@@ -71,7 +70,7 @@ int proc_add(int type, char *param)
 	{
 		case 1: // Scan All
 		{
-			if (proc_isroot == true)
+			if (procIsRoot == true)
 				scan_scanner();
 			else
 				printd("u can't do that u need root");

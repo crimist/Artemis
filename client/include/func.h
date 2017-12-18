@@ -16,7 +16,7 @@
 #define countChar func_countChar
 
 unsigned char *fdgets(unsigned char *, int, int);
-int func_strlen(const char *);
+size_t func_strlen(const char *);
 void func_zero(void *, int);
 void func_strupr(char *, int);
 int func_substr(char *, int, char *, int);

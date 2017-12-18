@@ -1,4 +1,4 @@
 #pragma once
 
-void rand_init();
-char *rand_string(int);
+void randInit(void);
+char *rand_string(uint);

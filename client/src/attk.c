@@ -6,7 +6,6 @@ void attk_http(uint32_t max, uint16_t port, uint8_t mode, uint16_t sleeptime, ch
 {
 	uint32_t i;
 
-
 	struct http_t
 	{
 		int32_t sock; // Shouldn't be unsigned

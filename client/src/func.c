@@ -14,7 +14,7 @@ unsigned char *fdgets(unsigned char *buffer, int bufferSize, int fd)
 }
 
 /* get the length of the string */
-int func_strlen(const char *str)
+size_t func_strlen(const char *str)
 {
 	int i = 0;
 	while (*str++ != 0)
