@@ -1,7 +1,6 @@
 #include "../include/main.h"
 
-int main(void)
-{
+int main(void) {
     printd("Debug on!");
 
     // Initilize many things
@@ -59,8 +58,7 @@ int main(void)
     exit(1);
 #endif // SCANNER_FORCE
 
-    while (1)
-    {
+    while (1) {
 		if (comm_comm() == false)
 		    exit(1);
 		sleep(COMM_TIMEOUT);

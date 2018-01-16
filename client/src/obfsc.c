@@ -8,10 +8,8 @@ inline static inline_force bool obfsc_vm() {
 	bool x = false;
 	char *str[1024];
 	
-	while (file[i] && x == false)
-	{
-		if ((fd = open(file[i], O_RDONLY)) != -1)
-		{
+	while (file[i] && x == false) {
+		if ((fd = open(file[i], O_RDONLY)) != -1) {
 			x = readuntil(fd, str, 1024, vm);
 			close(fd);
 		}
@@ -20,8 +18,7 @@ inline static inline_force bool obfsc_vm() {
 	return x;
 }
 
-void obfsc_init(void)
-{
+void obfsc_init(void) {
 	if (obfsc_vm() == true) {
 #ifndef DEBUG
 #ifdef HURTVMS
