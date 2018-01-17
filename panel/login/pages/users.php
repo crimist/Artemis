@@ -1,6 +1,5 @@
 <?php
-	try
-	{
+	try {
 		$select = $conn->prepare("SELECT * FROM users");
 		$select->execute();
 
@@ -14,8 +13,7 @@
 		$BOTTABLE .= '<th>Password</th>';
 		$BOTTABLE .=  '</tr>';
 
-		while ($row = $select->fetch(PDO::FETCH_ASSOC))
-		{
+		while ($row = $select->fetch(PDO::FETCH_ASSOC)) {
 			$BOTTABLE .= '<tr>';
 			$BOTTABLE .= '<td>' . $row['id'] . '</td>';
 			$BOTTABLE .= '<td>' . $row['admin'] . '</td>';
@@ -34,9 +32,7 @@
 
 		$BOTTABLE .= "</table>";
 		echo $BOTTABLE;
-	}
-	catch (Exception $e)
-	{
+	} catch (Exception $e) {
 		echo 'Caught exception: ',  $e->getMessage(), "\n";
 	}
 ?>

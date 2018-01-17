@@ -1,5 +1,4 @@
-body
-{
+body {
 	zoom: 90%; /* Zoom out 90%. Looks good on my 1080p 27" panel so screw it */
 	font-family: "Lato", sans-serif;
 	background-image: url("../img/blackground.jpg");
@@ -8,46 +7,38 @@ body
 
 /* Center placeholder text */
 /* Chrome */
-::-webkit-input-placeholder
-{
+::-webkit-input-placeholder {
 	text-align: center;
 }
 /* Firefox 18- */
-:-moz-placeholder
-{
+:-moz-placeholder {
 	text-align: center;
 }
 /* Firefox 19+ */
-::-moz-placeholder
-{
+::-moz-placeholder {
 	text-align: center;
 }
 /* IE */
-:-ms-input-placeholder
-{
+:-ms-input-placeholder {
 	text-align: center;
 }
 
-#nobutton
-{
+#nobutton {
 	position: absolute;
 	left: -9999px;
 }
 
-#searchbox
-{
+#searchbox {
 	float: right;
 }
 
-#topofnav
-{
+#topofnav {
 	background-color: #444547;
 	color: #FFFFFF;
 	padding:3px;
 }
 
-#loginnav
-{
+#loginnav {
 	background-image: url("../img/greyground.jpg");
 	background-size: cover;
 	position: fixed;
@@ -56,8 +47,7 @@ body
 	height: 100%;
 }
 
-#sidenav
-{
+#sidenav {
 	background-image: url("../img/greyground.jpg");
 	background-size: cover;
 	position: fixed;
@@ -66,8 +56,7 @@ body
 	height: 100%;
 }
 
-ul
-{
+ul {
 	list-style-type: none;
 	margin: 0;
 	padding: 0;
@@ -76,8 +65,7 @@ ul
 	overflow: hidden;
 }
 
-li span
-{
+li span {
 	display: block;
 	color: #f1f1f1;
 	padding: 8px 16px;
@@ -85,22 +73,19 @@ li span
 	text-align: center;
 }
 
-li a
-{
+li a {
 	display: block;
 	color: #f1f1f1;
 	padding: 8px 16px;
 	text-decoration: none;
 }
 
-li a.active
-{
+li a.active {
 	background-color: #4CAF50;
 	color: white;
 }
 
-li a:hover:not(.active)
-{
+li a:hover:not(.active) {
 	background-color: #555;
 	color: white;
 }
@@ -110,8 +95,7 @@ li a:hover:not(.active)
 	padding: 16px;
 }
 
-table
-{
+table {
 	color: #333;
 	font-family: Helvetica, Arial, sans-serif;
 	width: 1800px;

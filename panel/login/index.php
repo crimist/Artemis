@@ -46,7 +46,7 @@
 		<div>
 			<div id="loginnav">
 				<?php
-					if(isset($errMsg)){
+					if(isset($errMsg)) {
 						echo '<div style="color:#FF0000;text-align:center;font-size:12px;">'.$errMsg.'</div>';
 					}
 				?>

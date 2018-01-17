@@ -9,8 +9,7 @@
 	require_once '../include/main.php';
 	session_start();
 
-	if (!isset($_SESSION['username']))
-	{
+	if (!isset($_SESSION['username'])) {
 		header('Location: index.php');
 		exit;
 	}
@@ -23,8 +22,7 @@
 		':user'=>$_SESSION['username']
 	));
 
-	if(isset($_GET["p"]))
-	{
+	if(isset($_GET["p"])) {
 		$page = htmlspecialchars($_GET["p"]);
 		if ($page == "bots")
 			$pagetype = 1;
@@ -36,18 +34,14 @@
 			$pagetype = 4;
 		else if ($page == 'cmd')
 			$pagetype = 5;
-		else if ($page == "logout")
-		{
+		else if ($page == "logout") {
 			session_destroy();
 			header("location: index.php");
 			exit;
-		}
-		else
-		{
+		} else {
 			$pagetype = 1;
 		}
-	}
-	else
+	} else
 		$pagetype = 1;
 ?>
 

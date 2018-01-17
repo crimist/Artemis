@@ -12,8 +12,7 @@
 	$BOTTABLE .= '<th>Botkey</th>';
 	$BOTTABLE .=  '</tr>';
 
-	while ($row = $select->fetch(PDO::FETCH_ASSOC))
-	{
+	while ($row = $select->fetch(PDO::FETCH_ASSOC)) {
 		$BOTTABLE .= '<tr>';
 		$BOTTABLE .= '<td>' . $row['id'] . '</td>';
 		$BOTTABLE .= '<td>' . $row['task'] . '</td>';
@@ -36,8 +35,7 @@
 	$BOTTABLE .= "</table>";
 	echo $BOTTABLE;
 
-	if (isset($_POST['cmdsubmit']))
-	{
+	if (isset($_POST['cmdsubmit'])) {
 		if (!isset($_SESSION['username'])) // Do we need this to stop unathuthed posts?
 			die();
 
@@ -49,19 +47,15 @@
 
 		$task = str_replace(" ", "", $task);
 
-		if (isInt($key) == true)
-		{
-			if ($key == 0)
-			{
+		if (isInt($key) == true) {
+			if ($key == 0) {
 				$botsq = $conn->prepare("SELECT bot_id FROM bots WHERE bot_id>0");
 				$botsq->execute();
 				$key = $botsq->rowCount();
 			}
 			$count = $key;
 			$key = NULL;
-		}
-		else
-		{
+		} else {
 			$count = 1;
 			$search = $conn->prepare("SELECT * FROM bots WHERE bot_key = :key");
 			$search->execute(array(
@@ -71,8 +65,7 @@
 				$cmdErr .= "Bot key invalid";
 		}
 
-		switch ($task)
-		{
+		switch ($task) {
 			case "ScanAll":
 				$inserttask = 1;
 				break;
@@ -89,8 +82,7 @@
 				die(); // Why would you post this for no reason?
 		}
 
-		try
-		{
+		try {
 			$taskq = $conn->prepare("INSERT INTO tasks (task, parameters, user, count, bkey) VALUES (:task, :param, :user, :count, :bkey)");
 			$taskq->execute(array(
 				":task"=>$inserttask,
@@ -99,8 +91,7 @@
 				":count"=>$count,
 				":bkey"=>$key
 			));
-		}
-		catch(PDOException $e) {
+		} catch(PDOException $e) {
 			logx("Command insert error: ", $e->getMessage(), 1);
 		}
 

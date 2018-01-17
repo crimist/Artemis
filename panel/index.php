@@ -5,13 +5,10 @@
 	/* Test if they are installed or not */
 	$tableExists = $conn->query("SHOW TABLES LIKE 'users'")->rowCount();
 
-	if ($tableExists > 0)
-	{
+	if ($tableExists > 0) {
 		header('Location: login/index.php');
 		exit();
-	}
-	else
-	{
+	} else {
 		header('Location: install.php');
 		exit();
 	}

@@ -2,27 +2,20 @@
 	session_start();
 	require_once 'include/main.php';
 
-	if (isset($_POST['submit']))
-	{
+	if (isset($_POST['submit'])) {
 		$errMsg = '';
 		$sucessMsg = '';
 
-		try
-		{
+		try {
 			$currentuser = $conn->prepare("SELECT id FROM users WHERE 1 = 1"); // Select all users
 			$currentuser->execute();
 			$rows = $currentuser->rowCount();
-		}
-		catch (PDOException $e)
-		{
-			if(defined("_DEBUG"))
-			{
+		} catch (PDOException $e) {
+			if(defined("_DEBUG")) {
 				$temperror = $e;
 			}
 			$rows = 0;
-		}
-		if ($rows > 0)
-		{ // If we already have a user tell them to leave
+		} if ($rows > 0) { // If we already have a user tell them to leave
 			$errMsg .= "ERROR: Allready installed <br>";
 			die();
 		}
@@ -37,15 +30,12 @@
 		if ($password == '')
 			$errMsg .= 'ERROR: You must enter your Password <br>';
 
-		if ($password !== $passwordc)
-		{
+		if ($password !== $passwordc) 
 			$errMsg .= 'ERROR: Passwords do not match <br>';
-		}
+
 		/* ARCH 1 is 32/64 and ARCH2 is ARM/X86 */
-		if ($errMsg == '')
-		{
-			try
-			{
+		if ($errMsg == '') {
+			try {
 				$botcreate = $conn->prepare("
 					CREATE TABLE IF NOT EXISTS bots(
 					bot_id INT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -65,21 +55,14 @@
 					bot_date_join DATETIME NOT NULL,
 					PRIMARY KEY (bot_id)) ENGINE=InnoDB");
 				$botcreate->execute();
-			}
-			catch (PDOException $e)
-			{
+			} catch (PDOException $e) {
 				if (defined("_DEBUG"))
-				{
 					$errMsg .= 'ERROR: Bot table creation failed: ' . $e->getMessage() . '<br>';
-				}
 				else
-				{
 					$errMsg .= 'ERROR: Bot table creation failed <br>';
-				}
 			}
 
-			try
-			{
+			try {
 				$usercreate = $conn->prepare("
 					CREATE TABLE IF NOT EXISTS users(
 					id INT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -90,21 +73,14 @@
 					password CHAR(128) NOT NULL,
 					PRIMARY KEY (id)) ENGINE=InnoDB");
 				$usercreate->execute();
-			}
-			catch (PDOException $e)
-			{
+			} catch (PDOException $e) {
 				if (defined("_DEBUG"))
-				{
 					$errMsg .= 'ERROR: User table creation failed: ' . $e->getMessage() . '<br>';
-				}
 				else
-				{
 					$errMsg .= 'ERROR: User table creation failed <br>';
-				}
 			}
 
-			try
-			{
+			try {
 				/*
 				id = task id
 				task = task to exec
@@ -123,16 +99,11 @@
 					bkey VARCHAR(20),
 					PRIMARY KEY (id)) ENGINE=InnoDB");
 				$taskcreate->execute();
-			}
-			catch(PDOException $e)
-			{
+			} catch(PDOException $e) {
 				if (defined("DEBUG"))
-				{
 					$errMsg .= 'ERROR: Task table creation failed: ' . $e->getMessage() . '<br>';
-				}
-				else {
+				else
 					$errMsg .= 'ERROR: Task table creation failed <br>';
-				}
 			}
 			try {
 				/*
@@ -146,12 +117,10 @@
 					bkey CHAR(20) NOT NULL,
 					PRIMARY KEY (id)) ENGINE=InnoDB");
 				$logcreate->execute();
-			}
-			catch(PDOException $e) {
+			} catch(PDOException $e) {
 				if(defined("_DEBUG")) {
 					$errMsg .= 'ERROR: Log table creation failed: ' . $e->getMessage() . '<br>';
-				}
-				else {
+				} else {
 					$errMsg .= 'ERROR: Log table creation failed <br>';
 				}
 			}
@@ -162,8 +131,7 @@
 			try {
 				$insert = $conn->prepare("INSERT INTO users (username, password, admin, lastip, lastseen) VALUES (:user, :pass, :admin, :ip, 0)");
 				$insert->execute(array(':user'=>$username, ':pass'=>$hashpass, ':admin'=>$admin, ':ip'=>$_SERVER['REMOTE_ADDR']));
-			}
-			catch(PDOException $e) {
+			} catch(PDOException $e) {
 				$errMsg .= 'ERROR: User insert failed: ' . $e->getMessage() . '<br>';
 			}
 			header('location: login/');
