@@ -82,8 +82,8 @@
 					require_once "pages/users.php";
 				else if ($pagetype == 4) // Logs
 					require_once "pages/log.php";
-				else if ($pagetype == 5) // Cmd
-					require_once "pages/cmd.php";
+				else if ($pagetype == 5) // Update
+					require_once "pages/update.php";
 			?>
 			</div>
 		</div>
