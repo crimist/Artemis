@@ -19,5 +19,5 @@
     system("git clone git@github.com:Syc0x00/Artemis.git /tmp/artemis");
     copyDir("/tmp/Artemis/panel/", "../../"); // ../../ = (pages/login) -> html/artemis
 
-    echo "Currently there is no version checking";
+    echo "Updated!";
 ?>
