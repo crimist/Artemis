@@ -23,7 +23,7 @@ struct _comminfo {
 	char 	*arch;
 } comminfo;
 
-static inline __attribute__((always_inline)) uint16_t _bogos(void) {
+static uint16_t _bogos(void) {
 	int cmdline = open("/proc/cpuinfo", O_RDONLY);
 	unsigned char linebuf[4096];
 	while (fdgets(linebuf, 4096, cmdline) != NULL) {
@@ -47,7 +47,7 @@ static inline __attribute__((always_inline)) uint16_t _bogos(void) {
 	return 0;
 }
 
-static inline __attribute__((always_inline)) uint8_t _cores() {
+static uint8_t _cores() {
 	uint8_t totalcores = 0;
 	int cmdline = open("/proc/cpuinfo", O_RDONLY);
 	unsigned char linebuf[4096];
@@ -60,7 +60,7 @@ static inline __attribute__((always_inline)) uint8_t _cores() {
 	return totalcores;
 }
 
-static inline __attribute__((always_inline)) uint16_t _mhz() { // Getz CPU speed in mhz
+static uint16_t _mhz() { // Getz CPU speed in mhz
 	int cmdline = open("/proc/cpuinfo", O_RDONLY);
 	unsigned char linebuf[4096];
 	while (fdgets(linebuf, 4096, cmdline) != NULL) {
@@ -87,7 +87,7 @@ static inline __attribute__((always_inline)) uint16_t _mhz() { // Getz CPU speed
 // Why does static inline work but inline on its own not work?
 // Gotta look this up when I get back on wifi
 
-static inline __attribute__((always_inline)) uint8_t _bit(void) { // Gets 32 or 64 bit arch
+static uint8_t _bit(void) { // Gets 32 or 64 bit arch
 	if ((size_t) -1 > 0xffffffffUL)
 		return 64;
 	else
@@ -106,7 +106,7 @@ void comm_init(void) {
 	comminfo.arch = uinfo.machine;
 }
 
-static inline __attribute__((always_inline)) void processRecv(char *data) {
+static void processRecv(char *data) {
 	char *string = data;
 	char *token  = strchr(data, '*');
 

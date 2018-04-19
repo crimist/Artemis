@@ -12,7 +12,8 @@
 
 #ifdef SCANNER_TEST
 #ifndef DEBUG
-clang_err("Including SCANNER_TEST in a non DEBUG build")
+clang_wrn("Tried to use SCANNER_TEST in a non DEBUG build")
+#undef SCANNER_TEST
 #endif
 #endif
 
