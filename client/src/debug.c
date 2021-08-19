@@ -1,6 +1,6 @@
 #include "../include/main.h"
 
-/* Just to be 100% sure that we don't accidently put it in a proper build */
+/* Just to be sure that we don't accidently put it in a proper build */
 #ifdef DEBUG
 
 void _printd(const char *file, const char *func, const int line, const char *fmt, ...) {

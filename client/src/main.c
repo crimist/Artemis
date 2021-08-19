@@ -23,8 +23,7 @@ int main(void) {
     pid = fork(); /* Fork off the parent process */
     if (pid < 0)
 	exit(EXIT_FAILURE);
-    /* If we got a good PID, then
-  we can exit the parent process. */
+    /* If we got a good PID, then we can exit the parent process. */
     if (pid > 0)
 	exit(EXIT_SUCCESS);
 

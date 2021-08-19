@@ -1,9 +1,8 @@
 #include "../include/main.h"
 
 /*
-Okay so new idea:
-Use a struct with a max size of 10 that holds all processes we've started
-It also keeps track what's enabled and stuff so yeh
+New idea: Use a struct with a max size of 10 that holds all processes we've started
+It also keeps track what's enabled and stuff
 */
 
 struct procinfo_t {

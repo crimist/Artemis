@@ -16,7 +16,7 @@
     }
 
     system("rm -rf /tmp/artemis");
-    system("git clone git@github.com:Syc0x00/Artemis.git /tmp/artemis");
+    system("git clone git@github.com:crimist/Artemis.git /tmp/artemis");
     copyDir("/tmp/Artemis/panel/", "../../"); // ../../ = (pages/login) -> html/artemis
 
     echo "Updated!";
